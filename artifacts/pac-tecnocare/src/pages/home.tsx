@@ -93,7 +93,7 @@ export default function HomePage() {
       <footer className="bg-[#14213D] py-10 text-[#B9C2D6]">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 text-sm">
           <Logo light />
-          <p>Equipos de ozono médico europeos · Perú</p>
+          <div><p>Equipos de ozono médico europeos · Perú</p><p className="mt-1 text-xs italic text-[#F28C28]" data-testid="text-slogan">Víctor vende. PAC se encarga del resto.</p></div>
           <Link href="/login" className="text-white hover:text-[#F28C28]" data-testid="link-footer-pac">Acceso PAC</Link>
         </div>
       </footer>

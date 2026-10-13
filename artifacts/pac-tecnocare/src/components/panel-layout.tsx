@@ -1,8 +1,12 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { Home, Users, Phone, Mic, Orbit, BarChart3, LogOut, Menu, X } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useAuth } from "@/auth/auth-provider";
+import { VoiceNoteButton } from "@/components/voice-note-modal";
+import { useSeguimientos } from "@/hooks/use-pac-data";
+import { useToast } from "@/hooks/use-toast";
+import { todayLima } from "@/lib/format";
 
 const NAV = [
   { href: "/panel", label: "Inicio", icon: Home },
@@ -19,6 +23,19 @@ export function PanelLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const seg = useSeguimientos();
+  const { toast } = useToast();
+  const reminded = useRef(false);
+  useEffect(() => {
+    if (reminded.current || !seg.data) return;
+    reminded.current = true;
+    const hoy = todayLima();
+    const list = seg.data.filter((c) => c.proximo_contacto_fecha?.slice(0, 10) === hoy);
+    if (!list.length) return;
+    const names = list.slice(0, 3).map((c) => c.nombre || c.institucion || "un cliente");
+    const extra = list.length > 3 ? ` y ${list.length - 3} más` : "";
+    toast({ title: "Recordatorio", description: `Recordatorio: hoy toca llamar a ${names.join(", ")}${extra}` });
+  }, [seg.data, toast]);
 
   const logout = async () => {
     setLeaving(true);
@@ -35,7 +52,7 @@ export function PanelLayout({ children }: { children: ReactNode }) {
 
   const nav = (
     <nav className="flex h-full flex-col gap-1 p-4">
-      <Link href="/panel" onClick={() => setOpen(false)} className="mb-5 flex justify-center rounded-lg bg-white py-2.5" data-testid="link-panel-logo"><Logo /></Link>
+      <Link href="/panel" onClick={() => setOpen(false)} className="mb-5 flex justify-center rounded-lg bg-white py-2.5" data-testid="link-panel-logo"><Logo size="sm" /></Link>
       {NAV.map(({ href, label, icon: Icon }) => {
         const active = location === href || (href !== "/panel" && location.startsWith(href));
         return (
@@ -60,8 +77,9 @@ export function PanelLayout({ children }: { children: ReactNode }) {
     <div className="min-h-[100dvh] bg-[#F4F6FB]">
       <aside className="fixed inset-y-0 left-0 hidden w-[208px] bg-[#14213D] md:block">{nav}</aside>
       <header className="sticky top-0 z-30 flex items-center justify-between bg-[#14213D] px-4 py-3 md:hidden">
-        <Logo light />
-        <button onClick={() => setOpen(true)} aria-label="Abrir menú" data-testid="button-menu" className="rounded-md p-1.5 text-white hover:bg-white/10"><Menu className="h-5 w-5" /></button>
+        <Logo light size="sm" />
+        <div className="flex items-center gap-2"><VoiceNoteButton compact />
+        <button onClick={() => setOpen(true)} aria-label="Abrir menú" data-testid="button-menu" className="rounded-md p-1.5 text-white hover:bg-white/10"><Menu className="h-5 w-5" /></button></div>
       </header>
       {open && (
         <div className="fixed inset-0 z-40 md:hidden">
@@ -72,7 +90,7 @@ export function PanelLayout({ children }: { children: ReactNode }) {
           </aside>
         </div>
       )}
-      <main className="md:pl-[208px]"><div className="mx-auto max-w-6xl px-4 py-6 sm:px-7 sm:py-8">{children}</div></main>
+      <main className="md:pl-[208px]"><div className="mx-auto max-w-6xl px-4 py-6 sm:px-7 sm:py-8"><div className="mb-2 hidden justify-end md:flex"><VoiceNoteButton /></div>{children}</div></main>
     </div>
   );
 }

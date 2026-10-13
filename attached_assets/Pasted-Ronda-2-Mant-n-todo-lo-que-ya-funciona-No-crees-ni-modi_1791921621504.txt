@@ -1,0 +1,23 @@
+Ronda 2. Mantén todo lo que ya funciona. No crees ni modifiques tablas.
+
+1. APOLLO (/panel/apollo) – "Apollo · Prospección: Leads cerca de TECNOCARE"
+- Fondo azul marino #14213D. Logo TECNOCARE al centro dentro de un círculo blanco.
+- Alrededor, burbujas en 3 anillos concéntricos punteados: más cerca del centro = más afinidad.
+  Naranja #F28C28 = alta afinidad (80-100%), azul #2F6FDB = media (50-79%), gris = baja.
+- Usa una lista local de ~14 leads de ejemplo (clínicas y centros de rehabilitación de Lima, Arequipa y Trujillo, con especialidad, ciudad, afinidad % y si ya ofrecen ozono). Marca la vista con una etiqueta discreta "Datos de ejemplo · integración Apollo próximamente".
+- Animación suave: las burbujas aparecen escalonadas y flotan levemente. Hover agranda la burbuja y muestra su nombre.
+- Clic en una burbuja abre una tarjeta: "Afinidad 92%", nombre, especialidad · ciudad, nota, y botón naranja "Contactar".
+- "Contactar" inserta ese lead en public.clientes (nombre, institucion, especialidad, temperatura_actual = 'Tibio' si afinidad ≥80 si no 'Frio', etapa_actual = 'Prospecto Apollo', proximo_contacto_fecha = hoy, proximo_contacto_motivo = 'Primer contacto Apollo'). Luego el botón cambia a verde "Contacto creado ✓" y se dibuja una línea del centro a la burbuja. Si ya existe un cliente con ese nombre, no lo dupliques.
+- Leyenda abajo a la izquierda: Más cerca = más afinidad / Interés medio / Lejano.
+
+2. REPORTES (/panel/reportes)
+- KPIs reales desde la BD: clientes por temperatura, reuniones por etapa, % de clientes con próximo contacto agendado.
+- Gráfico de barras real: clientes por etapa_actual.
+- Gráfico de líneas animado "Con PAC: más contactos, más ventas": línea azul Contactos y línea naranja Ventas que crecen de izquierda a derecha, con área degradada. Etiquétalo claramente como "Proyección ilustrativa".
+- Usa Recharts.
+
+3. PULIDO
+- Llamadas: aviso tipo toast arriba "Recordatorio: hoy toca llamar a X" al entrar al panel si hay llamadas de hoy.
+- Botón naranja "Nota de voz" arriba a la derecha del panel: por ahora abre un modal que dice "Grabación con Granola – próximamente" y muestra la última reunión registrada con su resumen IA (contacto, interés, siguiente paso).
+- En el footer de la web pública y del login, frase: "Víctor vende. PAC se encarga del resto."
+- Revisa que todo se vea bien en celular.

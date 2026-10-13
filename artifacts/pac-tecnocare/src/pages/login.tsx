@@ -28,10 +28,10 @@ export default function LoginPage() {
 
   const input = "w-full rounded-md border border-[#D5DAE4] bg-white px-3 py-2 text-sm outline-none transition focus:border-[#2F6FDB] focus:ring-4 focus:ring-[#2F6FDB]/15";
   return (
-    <div className="relative grid min-h-[100dvh] place-items-center bg-gradient-to-br from-[#14213D] via-[#1D3266] to-[#2A4A9A] px-4">
+    <div className="relative grid min-h-[100dvh] place-items-center bg-gradient-to-br from-[#14213D] via-[#1D3266] to-[#2A4A9A] px-4 pb-16 pt-16">
       <Link href="/" className="absolute left-5 top-5 inline-flex items-center gap-1.5 text-sm text-white/70 transition hover:text-white" data-testid="link-volver"><ArrowLeft className="h-4 w-4" /> Volver al sitio</Link>
       <form onSubmit={submit} className="fade-up w-full max-w-sm rounded-2xl bg-white p-7 shadow-[0_30px_60px_-20px_rgba(10,18,40,.5)]" data-testid="form-login">
-        <div className="flex justify-center"><Logo /></div>
+        <div className="flex justify-center"><Logo size="lg" /></div>
         <h1 className="mt-4 text-center text-xl font-bold text-[#14213D]">Acceso PAC</h1>
         <p className="text-center text-xs text-muted-foreground">Panel comercial privado</p>
         <label className="mt-6 block text-[11px] font-medium text-[#5B6478]">Correo electrónico
@@ -47,6 +47,7 @@ export default function LoginPage() {
         </button>
         <p className="mt-4 text-center text-[11px] text-muted-foreground">Acceso solo para usuarios autorizados de TECNOCARE.</p>
       </form>
+      <p className="absolute inset-x-0 bottom-5 text-center text-xs italic text-white/70" data-testid="text-slogan">Víctor vende. PAC se encarga del resto.</p>
     </div>
   );
 }

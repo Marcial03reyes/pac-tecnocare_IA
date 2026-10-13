@@ -1,13 +1,16 @@
-export function Logo({ className = "", light = false }: { className?: string; light?: boolean }) {
-  return (
-    <span className={`inline-flex flex-col items-center leading-none select-none ${className}`} aria-label="TECNOCARE">
-      <svg width="26" height="18" viewBox="0 0 26 18" aria-hidden="true">
-        <path d="M5 13a8 8 0 0 1 16 0" fill="none" stroke="#2F6FDB" strokeWidth="2.6" strokeLinecap="round" />
-        <path d="M9 13a4 4 0 0 1 8 0" fill="none" stroke={light ? "#fff" : "#14213D"} strokeWidth="2.6" strokeLinecap="round" />
-      </svg>
-      <span className={`mt-0.5 text-[11px] font-bold tracking-tight ${light ? "text-white" : "text-[#14213D]"}`}>
-        TECNO<span className="font-medium text-[#2F6FDB]">CARE</span>
-      </span>
-    </span>
-  );
+const BASE = import.meta.env.BASE_URL;
+export const LOGO_SRC = `${BASE}tecnocare_logo.png`;
+export const ICON_SRC = `${BASE}tecnocare_icono.png`;
+
+/** Full TECNOCARE logo. Dark-blue text must sit on white: `light` adds a white pad for navy backgrounds. */
+export function Logo({ className = "", light = false, size = "md" }: { className?: string; light?: boolean; size?: "sm" | "md" | "lg" }) {
+  const h = size === "sm" ? "h-7" : size === "lg" ? "h-14" : "h-9";
+  const img = <img src={LOGO_SRC} alt="TECNOCARE" className={`${h} w-auto object-contain select-none`} draggable={false} />;
+  return light
+    ? <span className={`inline-flex items-center rounded-lg bg-white px-2.5 py-1.5 ${className}`}>{img}</span>
+    : <span className={`inline-flex items-center ${className}`}>{img}</span>;
+}
+
+export function LogoIcon({ className = "h-12 w-12" }: { className?: string }) {
+  return <img src={ICON_SRC} alt="TECNOCARE" className={`${className} object-contain select-none`} draggable={false} />;
 }

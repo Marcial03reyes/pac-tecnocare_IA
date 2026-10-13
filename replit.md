@@ -29,16 +29,16 @@ _Populate as you build — short repo map plus pointers to the source-of-truth f
 ## Architecture decisions
 
 - Use Supabase Auth with email/password and no public registration, as explicitly requested.
-- The commercial panel reads existing `public.clientes` and `public.reuniones`; it does not write records or change schema.
+- The commercial panel reads existing `public.clientes` and `public.reuniones`. Round 2 explicitly authorizes inserting a selected Apollo example lead into `clientes` via “Contactar”, checking its name first; no schema changes.
 - Compute “today” in the America/Lima timezone.
 
 ## Product
 
-Public equipment and community information; protected commercial dashboard; client details and meeting history; scheduled telephone followups; meeting summaries and copyable WhatsApp drafts. Apollo and Reportes remain “Próximamente” as requested.
+Public equipment and community information; protected commercial dashboard; client details and meeting history; scheduled telephone followups; meeting summaries and copyable WhatsApp drafts. Apollo displays clearly labelled local example leads with contact creation. Reports combine real database aggregates with a distinctly labelled illustrative projection. Granola recording remains “Próximamente”.
 
 ## User preferences
 
-All content in Spanish. Match the supplied TECNOCARE storyboard references: Inter, navy #14213D, blue #2F6FDB, orange #F28C28, background #F4F6FB, responsive white cards.
+All content in Spanish. Match the supplied TECNOCARE storyboard references: Inter, navy #14213D, blue #2F6FDB, orange #F28C28, background #F4F6FB, responsive white cards. Use the provided full PNG logo over white/light backgrounds, never directly on navy; use the icon PNG for Apollo center, favicon, and loading.
 
 ## Gotchas
 
