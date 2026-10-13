@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "PAC — TECNOCARE"
+description = "Web pública de TECNOCARE y plataforma privada de apoyo comercial en español, conectada al Supabase existente para consultar clientes, seguimientos y reuniones."
+version = "1.0.0"
+id = "artifacts/pac-tecnocare"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24987
+
+[services.development]
+run = "pnpm --filter @workspace/pac-tecnocare run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/pac-tecnocare", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/pac-tecnocare/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24987"
+BASE_PATH = "/"

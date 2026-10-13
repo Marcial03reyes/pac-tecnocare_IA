@@ -1,21 +1,23 @@
-# [Project name]
+# PAC — Plataforma de Apoyo Comercial para TECNOCARE
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Web pública de TECNOCARE y panel comercial privado en español para consultar clientes, seguimientos y reuniones del Supabase self-hosted existente.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- App workflow: `artifacts/pac-tecnocare: web`
+- `pnpm --filter @workspace/pac-tecnocare run typecheck` — check the web application
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required Secrets: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. Never hardcode or log values.
+- **Do not create, modify, migrate, or seed database tables.** The user requires the existing Supabase tables to remain untouched.
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
 - API: Express 5
-- DB: PostgreSQL + Drizzle ORM
+- Product data and authentication: existing self-hosted Supabase, via `@supabase/supabase-js`.
+- Shared API/DB scaffolding is not the product's data source.
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
@@ -26,15 +28,17 @@ _Populate as you build — short repo map plus pointers to the source-of-truth f
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Use Supabase Auth with email/password and no public registration, as explicitly requested.
+- The commercial panel reads existing `public.clientes` and `public.reuniones`; it does not write records or change schema.
+- Compute “today” in the America/Lima timezone.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Public equipment and community information; protected commercial dashboard; client details and meeting history; scheduled telephone followups; meeting summaries and copyable WhatsApp drafts. Apollo and Reportes remain “Próximamente” as requested.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+All content in Spanish. Match the supplied TECNOCARE storyboard references: Inter, navy #14213D, blue #2F6FDB, orange #F28C28, background #F4F6FB, responsive white cards.
 
 ## Gotchas
 
