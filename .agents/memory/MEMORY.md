@@ -1,0 +1,1 @@
+- [PAC — alcance y restricciones](pac-scope.md) — TECNOCARE en español; Supabase existente sin cambios de tablas y acceso privado sin registro público.

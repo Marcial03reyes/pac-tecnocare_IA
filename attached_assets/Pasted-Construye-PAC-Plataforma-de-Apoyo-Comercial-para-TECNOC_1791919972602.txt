@@ -1,0 +1,22 @@
+Construye "PAC – Plataforma de Apoyo Comercial" para TECNOCARE (empresa peruana que vende generadores de ozono médico europeos). Todo en español. Usa las imágenes adjuntas como referencia visual exacta.
+
+STACK: React + Vite + TypeScript + Tailwind + @supabase/supabase-js. Fuente Inter. 
+Colores: azul marino #14213D (sidebar y fondos oscuros), azul #2F6FDB (acentos), naranja #F28C28 (botones principales y "Caliente"), fondo claro #F4F6FB.
+
+CONEXIÓN: Supabase self-hosted ya existente. Lee VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY desde los Secrets. NUNCA pongas claves en el código. NO crees, modifiques ni migres tablas: ya existen y no se tocan.
+
+TABLAS EXISTENTES:
+- public.clientes: id, nombre, institucion, especialidad, telefono, email, created_at, etapa_actual, temperatura_actual ('Frio' | 'Tibio' | 'Caliente', sin tilde), proximo_contacto_fecha (date), proximo_contacto_motivo, ultima_reunion
+- public.reuniones: id, cliente_id (FK a clientes), fecha_reunion, origen_audio, transcripcion_resumen, temperatura ('Frio'|'Tibio'|'Caliente'), objeciones_detectadas, feedback_estrategico, borrador_whatsapp, acuerdos_proximo_paso, etapa, proximo_contacto_fecha, analisis (jsonb), transcripcion
+
+PÁGINAS:
+1. Web pública (/): navbar con logo TECNOCARE, Inicio, Equipos, Comunidad, Capacitaciones, Eventos y botones "Ingresar" y "Cotizar". Hero: "Equipos de ozono médico europeos, con respaldo y servicio en el Perú." con botones "Solicitar cotización" y "Ver equipos". Sección "Comunidad TECNOCARE – Eventos y capacitaciones" con 3 tarjetas (Webinar Dosimetría, Taller Ozonoterapia en rehabilitación, Capacitación online Uso seguro del generador) con botón "Inscribirme". Este contenido puede ser estático.
+2. Login (/login): tarjeta "Acceso PAC – Panel comercial privado" con Supabase Auth (email y contraseña). Sin registro público. Rutas del panel protegidas.
+3. Panel (/panel): sidebar oscuro con Inicio, Clientes, Llamadas, Notas de voz, Apollo, Reportes y Cerrar sesión. Saludo "Buenos días, Víctor".
+   - Clientes: 4 tarjetas KPI calculadas desde la BD (Leads calientes, Seguimientos hoy = proximo_contacto_fecha de hoy, Clientes registrados, Reuniones registradas). Tabla con columnas Cliente, Especialidad, Institución, Puntaje, Estado y Siguiente paso. Puntaje = barra derivada de la temperatura (Caliente≈90 naranja, Tibio≈65 azul, Frio≈35 gris). Estado = badge de color. Siguiente paso = proximo_contacto_motivo. Clic en una fila abre el detalle del cliente con su historial de reuniones.
+   - Llamadas: lista "Llamadas de hoy y próximas" ordenada por proximo_contacto_fecha, con botón "Llamar" (enlace tel:). Muestra un aviso arriba: "Recordatorio: hoy toca llamar a X" si hay alguna para hoy.
+   - Notas de voz: lista de reuniones (fecha, cliente, temperatura, transcripcion_resumen, acuerdos_proximo_paso, borrador_whatsapp con botón copiar).
+   - Apollo y Reportes: por ahora solo una página con el título y "Próximamente".
+Si una tabla está vacía, muestra un estado vacío amigable, no un error.
+
+Diseño limpio y profesional como las capturas: tarjetas blancas con bordes suaves y sombras ligeras, responsive.
