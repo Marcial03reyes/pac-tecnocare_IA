@@ -7,10 +7,10 @@ export function KpiRow() {
   const q = useKpis();
   if (q.isError) return <div className="mb-5"><ErrorState error={q.error} onRetry={() => q.refetch()} retrying={q.isFetching} /></div>;
   const items = [
-    { k: "calientes", label: "Leads calientes", color: "text-[#F28C28]" },
-    { k: "hoy", label: "Seguimientos hoy", color: "text-[#14213D]" },
-    { k: "clientes", label: "Clientes registrados", color: "text-[#14213D]" },
-    { k: "reuniones", label: "Reuniones registradas", color: "text-[#2F6FDB]" },
+    { k: "leads", label: "Leads nuevos", color: "text-[#14213D]" },
+    { k: "calientes", label: "Oportunidades calientes", color: "text-[#F28C28]" },
+    { k: "hoy", label: "Seguimientos hoy", color: "text-[#2F6FDB]" },
+    { k: "clientes", label: "Clientes", color: "text-[#1F9D61]" },
   ] as const;
   return (
     <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">

@@ -1,0 +1,23 @@
+Mantén todo lo que funciona. No crees tablas. En public.clientes ya existen además: origen, motivo_perdida, fecha_cierre.
+
+A. APOLLO – ajuste visual (como las capturas adjuntas):
+1. Tamaño de burbuja según afinidad: ≥80 ~64px naranja, 50-79 ~44px azul, <50 ~22px gris.
+2. Sin números dentro. Nombre de la institución al lado de las naranjas en texto blanco pequeño. La afinidad % solo en la tarjeta.
+3. Halo suave del color de cada burbuja; hover crece 10%; la seleccionada con aro naranja pulsante.
+4. Las grises pequeñas dispersas en la zona exterior con flotación lenta, más 6-8 puntitos decorativos.
+5. Tarjeta flotante junto a la burbuja (no panel fijo), se cierra al hacer clic fuera. La vista ocupa todo el ancho.
+6. Centro: tecnocare_logo.png completo en círculo blanco con halo azul.
+7. Título arriba a la izquierda: "APOLLO · PROSPECCIÓN" (naranja, pequeño, espaciado) y "Leads cerca de TECNOCARE" (blanco, grande).
+
+B. APOLLO – botón Contactar:
+- Agrega a cada lead de ejemplo teléfono y email ficticios.
+- "Contactar" ofrece WhatsApp o Correo. WhatsApp abre wa.me con: "Hola, soy Víctor de TECNOCARE. Trabajamos con generadores de ozono médico europeos con medición de dosis real y soporte en Perú. ¿Le interesaría conocer más?". Correo abre mailto: con asunto "TECNOCARE – Ozono médico con dosimetría" y el mismo texto.
+- Al elegir, guarda en public.clientes: etapa_actual='Lead', temperatura_actual=NULL, origen='Apollo', proximo_contacto_fecha=hoy+3 días, proximo_contacto_motivo='Esperar respuesta'. No duplicar si ya existe el nombre.
+- Línea verde animada del centro a la burbuja; botón cambia a "Contactado ✓ · Ver en Leads".
+
+C. NIVELES (usando etapa_actual, sin cambiar tablas):
+- Etapas: Lead, Interesado, Demo, Cotización, Negociación, Ganado, Perdido, Descartado. Trata 'Prospecto' y 'Prospecto Apollo' como Lead.
+- Sidebar "Clientes" → "Contactos" con pestañas: Leads (Lead; muestra "Sin respuesta" en vez de temperatura; botones "Respondió con interés" → Interesado + elegir temperatura, y "Descartar"), Oportunidades (Interesado a Negociación; con temperatura y puntaje), Clientes (Ganado; badge verde "Cliente"), Cerrados (Perdido y Descartado, mostrando motivo_perdida).
+- En el detalle de una oportunidad: "Marcar venta ganada" (Ganado, fecha_cierre=hoy) y "Marcar como perdida" (pide motivo → motivo_perdida, Perdido, fecha_cierre=hoy).
+- KPIs de Inicio: Leads nuevos, Oportunidades calientes, Seguimientos hoy, Clientes.
+- Reportes: conversión Lead → Oportunidad → Cliente con %, motivos de pérdida, contactos por origen.

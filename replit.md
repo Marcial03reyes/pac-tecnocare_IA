@@ -29,7 +29,7 @@ _Populate as you build — short repo map plus pointers to the source-of-truth f
 ## Architecture decisions
 
 - Use Supabase Auth with email/password and no public registration, as explicitly requested.
-- The commercial panel reads existing `public.clientes` and `public.reuniones`. Round 2 explicitly authorizes inserting a selected Apollo example lead into `clientes` via “Contactar”, checking its name first; no schema changes.
+- The panel uses existing `public.clientes` and `public.reuniones`. “Contactar” offers WhatsApp/Correo, inserts a nonduplicated Apollo lead with null temperature, origin Apollo, and a followup in 3 days. Existing names are reused without rewriting them. Contact stage changes are authorized; no schema changes.
 - Compute “today” in the America/Lima timezone.
 
 ## Product
@@ -38,7 +38,11 @@ Public equipment and community information; protected commercial dashboard; clie
 
 ## User preferences
 
-All content in Spanish. Match the supplied TECNOCARE storyboard references: Inter, navy #14213D, blue #2F6FDB, orange #F28C28, background #F4F6FB, responsive white cards. Use the provided full PNG logo over white/light backgrounds, never directly on navy; use the icon PNG for Apollo center, favicon, and loading.
+All content in Spanish. Match the supplied TECNOCARE storyboard references: Inter, navy #14213D, blue #2F6FDB, orange #F28C28, background #F4F6FB, responsive white cards. Use the provided full PNG logo over white/light backgrounds, including Apollo center; use the icon PNG only for favicon and loading.
+
+## Contact lifecycle
+
+Stages: Lead, Interesado, Demo, Cotización, Negociación, Ganado, Perdido, Descartado. Treat legacy Prospecto/Prospecto Apollo as Lead without migrating rows. Unknown stages remain inspectable. Leads show “Sin respuesta”, opportunities have temperature/score, won sales are Clientes, closed records retain reasons. Loss requires a reason; wins/losses set the Lima closing date. Existing origen, motivo_perdida, fecha_cierre fields must be used. Funnel percentages are a current-stage snapshot, not historical conversion: no stage history is available.
 
 ## Gotchas
 

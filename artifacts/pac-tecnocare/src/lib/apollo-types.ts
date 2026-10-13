@@ -8,6 +8,8 @@ export interface ApolloLead {
   afinidad: number;
   ofreceOzono: boolean;
   nota: string;
+  telefono: string;
+  email: string;
 }
 
 export interface ApolloContactResult {

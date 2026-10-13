@@ -3,6 +3,7 @@ import { requireSupabase } from "@/lib/supabase";
 import { useAuth } from "@/auth/auth-provider";
 import { todayLima } from "@/lib/format";
 import type { Cliente, Reunion, ReunionConCliente } from "@/lib/types";
+import { contactBucket } from "@/lib/contact-stages";
 
 const PAGE = 1000;
 const STALE = 60_000;
@@ -19,7 +20,7 @@ async function fetchAll<T>(build: (from: number, to: number) => PromiseLike<{ da
   return out;
 }
 
-const CLIENTE_COLS = "id,nombre,institucion,especialidad,telefono,email,created_at,etapa_actual,temperatura_actual,proximo_contacto_fecha,proximo_contacto_motivo,ultima_reunion";
+export const CLIENTE_COLS = "id,nombre,institucion,especialidad,telefono,email,created_at,etapa_actual,temperatura_actual,proximo_contacto_fecha,proximo_contacto_motivo,ultima_reunion,origen,motivo_perdida,fecha_cierre";
 const REUNION_COLS = "id,cliente_id,fecha_reunion,origen_audio,transcripcion_resumen,temperatura,objeciones_detectadas,feedback_estrategico,borrador_whatsapp,acuerdos_proximo_paso,etapa,proximo_contacto_fecha,analisis,transcripcion";
 
 function useUserKey() {
@@ -39,29 +40,19 @@ export function useClientes() {
   });
 }
 
-export interface Kpis { calientes: number; hoy: number; clientes: number; reuniones: number; fecha: string }
+export interface Kpis { leads: number; calientes: number; hoy: number; clientes: number; fecha: string }
 
 export function useKpis() {
-  const { uid, enabled } = useUserKey();
-  return useQuery({
-    queryKey: ["pac", uid, "kpis"],
-    enabled,
-    staleTime: STALE,
-    refetchOnWindowFocus: true,
-    queryFn: async (): Promise<Kpis> => {
-      const sb = requireSupabase();
-      const fecha = todayLima();
-      const head = { count: "exact" as const, head: true };
-      const [cal, hoy, cli, reu] = await Promise.all([
-        sb.from("clientes").select("id", head).eq("temperatura_actual", "Caliente"),
-        sb.from("clientes").select("id", head).eq("proximo_contacto_fecha", fecha),
-        sb.from("clientes").select("id", head),
-        sb.from("reuniones").select("id", head),
-      ]);
-      for (const r of [cal, hoy, cli, reu]) if (r.error) throw r.error;
-      return { calientes: cal.count ?? 0, hoy: hoy.count ?? 0, clientes: cli.count ?? 0, reuniones: reu.count ?? 0, fecha };
-    },
-  });
+  const q = useClientes();
+  const fecha = todayLima();
+  const rows = q.data;
+  return { ...q, data: rows ? {
+    leads: rows.filter((c) => contactBucket(c) === "leads").length,
+    calientes: rows.filter((c) => contactBucket(c) === "oportunidades" && c.temperatura_actual === "Caliente").length,
+    hoy: rows.filter((c) => c.proximo_contacto_fecha?.slice(0, 10) === fecha).length,
+    clientes: rows.filter((c) => contactBucket(c) === "clientes").length,
+    fecha,
+  } satisfies Kpis : undefined };
 }
 
 export function useSeguimientos() {

@@ -13,6 +13,9 @@ export interface Cliente {
   proximo_contacto_fecha: string | null;
   proximo_contacto_motivo: string | null;
   ultima_reunion: string | null;
+  origen: string | null;
+  motivo_perdida: string | null;
+  fecha_cierre: string | null;
 }
 
 export interface Reunion {

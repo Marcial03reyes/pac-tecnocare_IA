@@ -6,6 +6,20 @@ import { todayLima } from "@/lib/format";
 import type { ApolloContactResult, ApolloLead } from "@/lib/apollo-types";
 
 const pending = new Map<string, Promise<unknown>>();
+export const APOLLO_MESSAGE = "Hola, soy Víctor de TECNOCARE. Trabajamos con generadores de ozono médico europeos con medición de dosis real y soporte en Perú. ¿Le interesaría conocer más?";
+export const APOLLO_SUBJECT = "TECNOCARE – Ozono médico con dosimetría";
+
+export function contactChannelUrl(lead: ApolloLead, channel: "whatsapp" | "correo"): string {
+  return channel === "whatsapp"
+    ? `https://wa.me/${lead.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(APOLLO_MESSAGE)}`
+    : `mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent(APOLLO_SUBJECT)}&body=${encodeURIComponent(APOLLO_MESSAGE)}`;
+}
+
+export function apolloFollowupDate(today = todayLima()): string {
+  const d = new Date(`${today}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 3);
+  return d.toISOString().slice(0, 10);
+}
 
 /** Serialize identical names in this tab, including browsers without Web Locks. */
 async function withLocalLock<T>(key: string, action: () => Promise<T>): Promise<T> {
@@ -57,10 +71,13 @@ export async function createOrFindApolloClient(
     nombre: lead.nombre,
     institucion: lead.institucion,
     especialidad: lead.especialidad,
-    temperatura_actual: lead.afinidad >= 80 ? "Tibio" : "Frio",
-    etapa_actual: "Prospecto Apollo",
-    proximo_contacto_fecha: todayLima(),
-    proximo_contacto_motivo: "Primer contacto Apollo",
+    telefono: lead.telefono,
+    email: lead.email,
+    temperatura_actual: null,
+    etapa_actual: "Lead",
+    origen: "Apollo",
+    proximo_contacto_fecha: apolloFollowupDate(),
+    proximo_contacto_motivo: "Esperar respuesta",
   }).select("id").single();
   if (error) {
     // If an existing database constraint catches a concurrent insert, reuse it.

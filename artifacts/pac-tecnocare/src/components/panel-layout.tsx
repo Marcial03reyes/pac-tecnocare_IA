@@ -10,7 +10,7 @@ import { todayLima } from "@/lib/format";
 
 const NAV = [
   { href: "/panel", label: "Inicio", icon: Home },
-  { href: "/panel/clientes", label: "Clientes", icon: Users },
+  { href: "/panel/clientes", label: "Contactos", icon: Users },
   { href: "/panel/llamadas", label: "Llamadas", icon: Phone },
   { href: "/panel/notas-de-voz", label: "Notas de voz", icon: Mic },
   { href: "/panel/apollo", label: "Apollo", icon: Orbit },

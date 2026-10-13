@@ -3,6 +3,8 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { TempBadge } from "@/components/temp";
 import { Bone, EmptyState, ErrorState } from "@/components/states";
 import { CopyButton } from "@/components/copy-button";
+import { StageActions } from "@/components/stage-actions";
+import { contactBucket, normalizeStage } from "@/lib/contact-stages";
 import { useReunionesCliente } from "@/hooks/use-pac-data";
 import { formatFecha, textoOGuion } from "@/lib/format";
 import type { Cliente } from "@/lib/types";
@@ -19,7 +21,7 @@ export function ClienteDetalle({ cliente, onClose }: { cliente: Cliente | null; 
         {cliente && (
           <>
             <SheetHeader className="text-left">
-              <div className="flex items-center gap-2"><TempBadge value={cliente.temperatura_actual} /><span className="text-xs text-muted-foreground">{textoOGuion(cliente.etapa_actual, "Sin etapa")}</span></div>
+              <div className="flex items-center gap-2">{contactBucket(cliente) === "clientes" ? <span className="rounded-md bg-[#1F9D61] px-2 py-0.5 text-[11px] font-semibold text-white">Cliente</span> : contactBucket(cliente) === "leads" ? <span className="rounded-md border border-dashed border-[#B9C2D6] px-2 py-0.5 text-[11px] font-semibold text-[#5B6478]">Sin respuesta</span> : <TempBadge value={cliente.temperatura_actual} />}<span className="text-xs text-muted-foreground" data-testid="text-detalle-etapa">{normalizeStage(cliente.etapa_actual)}</span></div>
               <SheetTitle className="text-xl text-[#14213D]" data-testid="text-detalle-nombre">{textoOGuion(cliente.nombre, "Cliente sin nombre")}</SheetTitle>
               <SheetDescription>{[cliente.especialidad, cliente.institucion].filter(Boolean).join(" · ") || "Sin especialidad ni institución registradas"}</SheetDescription>
             </SheetHeader>
@@ -27,11 +29,17 @@ export function ClienteDetalle({ cliente, onClose }: { cliente: Cliente | null; 
               {cliente.telefono && <a href={`tel:${cliente.telefono.replace(/\s/g, "")}`} className="inline-flex items-center gap-1.5 rounded-md bg-[#F28C28] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#E57D17]" data-testid="link-detalle-llamar"><Phone className="h-3.5 w-3.5" /> Llamar</a>}
               {cliente.email && <a href={`mailto:${cliente.email}`} className="inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-xs font-semibold text-[#14213D] hover:border-[#2F6FDB]" data-testid="link-detalle-email"><Mail className="h-3.5 w-3.5" /> Correo</a>}
             </div>
+            <div className="mt-3"><StageActions cliente={cliente} /></div>
             <dl className="pac-card mt-4 grid grid-cols-2 gap-4 p-4">
               <Field label="Teléfono" value={textoOGuion(cliente.telefono)} />
               <Field label="Correo" value={textoOGuion(cliente.email)} />
               <Field label="Próximo contacto" value={cliente.proximo_contacto_fecha ? formatFecha(cliente.proximo_contacto_fecha) : "Sin programar"} />
               <Field label="Última reunión" value={cliente.ultima_reunion ? formatFecha(cliente.ultima_reunion) : "—"} />
+              {(() => { const x = cliente as Cliente & { origen?: string | null; motivo_perdida?: string | null; fecha_cierre?: string | null }; return <>
+                <Field label="Origen" value={textoOGuion(x.origen ?? null, "Sin origen")} />
+                <Field label="Fecha de cierre" value={x.fecha_cierre ? formatFecha(x.fecha_cierre) : "—"} />
+                {x.motivo_perdida && <div className="col-span-2"><Field label="Motivo" value={x.motivo_perdida} /></div>}
+              </>; })()}
               <div className="col-span-2"><Field label="Siguiente paso" value={textoOGuion(cliente.proximo_contacto_motivo, "Sin definir")} /></div>
             </dl>
             <h3 className="mt-6 text-sm font-bold text-[#14213D]">Historial de reuniones</h3>

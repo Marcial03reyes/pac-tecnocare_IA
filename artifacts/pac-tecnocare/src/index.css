@@ -447,8 +447,14 @@
   @keyframes orbitFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
   @keyframes orbitSpin { to { transform: rotate(360deg); } }
   @keyframes orbitLine { to { stroke-dashoffset: 0; } }
+  .orbit-drift { animation: orbitDrift 11s ease-in-out infinite; }
+  @keyframes orbitDrift { 0%,100% { transform: translate(0,0); } 33% { transform: translate(6px,-8px); } 66% { transform: translate(-5px,5px); } }
+  .apollo-ring { animation: apolloRing 1.6s ease-out infinite; }
+  @keyframes apolloRing { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(1.55); opacity: 0; } }
+  .apollo-card { animation: apolloCard .22s cubic-bezier(.2,.9,.3,1.1) both; }
+  @keyframes apolloCard { from { opacity: 0; transform: translateY(6px) scale(.97); } to { opacity: 1; transform: none; } }
   @media (prefers-reduced-motion: reduce) {
-    .orbit-pop, .orbit-float, .orbit-spin, .fade-up { animation: none !important; }
+    .orbit-pop, .orbit-float, .orbit-spin, .orbit-drift, .apollo-ring, .apollo-card, .fade-up { animation: none !important; }
     .orbit-line { animation: none; stroke-dashoffset: 0; }
   }
 }

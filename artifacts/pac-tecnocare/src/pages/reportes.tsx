@@ -4,6 +4,11 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { PageHeader } from "@/components/panel-layout";
 import { useClientes, useReuniones } from "@/hooks/use-pac-data";
 import { usePageMeta } from "@/hooks/use-page-meta";
+import { contactBucket, normalizeStage } from "@/lib/contact-stages";
+import type { Cliente } from "@/lib/types";
+
+type ClienteExt = Cliente & { origen?: string | null; motivo_perdida?: string | null };
+const pctOf = (a: number, b: number) => (b ? Math.round((a / b) * 1000) / 10 : 0);
 
 const SIN = "Sin etapa";
 const TEMP_COLOR: Record<string, string> = { Caliente: "#F28C28", Tibio: "#2F6FDB", Frio: "#8A94A8", "Sin temperatura": "#C9CFDB" };
@@ -40,12 +45,24 @@ export default function ReportesPage() {
   const reuniones = useMemo(() => reu.data ?? [], [reu.data]);
   const porTemp = useMemo(() => count(clientes, (c) => c.temperatura_actual, "Sin temperatura"), [clientes]);
   const porEtapaReu = useMemo(() => count(reuniones, (r) => r.etapa, SIN), [reuniones]);
-  const porEtapaCli = useMemo(() => count(clientes, (c) => c.etapa_actual, SIN), [clientes]);
+  const porEtapaCli = useMemo(() => count(clientes, (c) => normalizeStage(c.etapa_actual), SIN), [clientes]);
+  const funnel = useMemo(() => {
+    const b = { leads: 0, oportunidades: 0, clientes: 0 };
+    clientes.forEach((c) => { const k = contactBucket(c); if (k in b) b[k as keyof typeof b]++; });
+    return [
+      { name: "Lead", value: b.leads + b.oportunidades + b.clientes, color: "#8A94A8" },
+      { name: "Oportunidad", value: b.oportunidades + b.clientes, color: "#2F6FDB" },
+      { name: "Cliente", value: b.clientes, color: "#1F9D61" },
+    ];
+  }, [clientes]);
+  const funnelTotal = funnel[0].value;
+  const porOrigen = useMemo(() => count(clientes as ClienteExt[], (c) => c.origen, "Sin origen"), [clientes]);
+  const motivos = useMemo(() => count((clientes as ClienteExt[]).filter((c) => ["Perdido", "Descartado"].includes(normalizeStage(c.etapa_actual))), (c) => c.motivo_perdida, "Sin motivo"), [clientes]);
   const conProx = clientes.filter((c) => c.proximo_contacto_fecha).length;
   const pct = clientes.length ? Math.round((conProx / clientes.length) * 1000) / 10 : 0;
 
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 max-w-full space-y-5">
       <PageHeader eyebrow="Datos reales de tu cartera" title="Reportes" />
       <div className="grid min-w-0 grid-cols-1 gap-5 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,.8fr)]">
         <Box>
@@ -74,6 +91,59 @@ export default function ReportesPage() {
               <p className="mt-1 text-xs text-[#B9C2D6]">{conProx} de {clientes.length} clientes tienen fecha agendada</p>
             </>
           )}
+        </Box>
+      </div>
+
+      <Box>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <p className="text-sm font-bold text-[#14213D]">Lead → Oportunidad → Cliente</p>
+            <p className="text-xs text-muted-foreground">Estimación con etapas actuales: conteos acumulados de cartera activa. No es conversión histórica; excluye cerrados y sin clasificar.</p>
+          </div>
+          <span className="rounded-full bg-[#EAF1FC] px-3 py-1 text-[11px] font-semibold text-[#2F6FDB]">Etapa actual</span>
+        </div>
+        <div className="mt-4">
+          {cli.isLoading ? <Skel h="h-28" /> : cli.isError ? <Err retry={() => cli.refetch()} /> : !funnelTotal ? <Empty text="Aún no hay contactos en Lead, Oportunidad o Cliente." /> : (
+            <ol className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-3" data-testid="chart-embudo">
+              {funnel.map((st, i) => (
+                <li key={st.name} className="min-w-0 rounded-xl bg-[#F4F6FB] p-4" data-testid={`embudo-${st.name}`}>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[#5B6478]">{st.name}</span>
+                    <span className="text-[11px] text-muted-foreground">{pctOf(st.value, funnelTotal).toLocaleString("es-PE")}% del total</span>
+                  </div>
+                  <p className="mt-1 text-3xl font-bold tabular-nums" style={{ color: st.color }}>{st.value}</p>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white"><div className="h-full origin-left rounded-full transition-transform duration-700" style={{ background: st.color, transform: `scaleX(${funnelTotal ? st.value / funnelTotal : 0})` }} /></div>
+                  {i > 0 && <p className="mt-2 text-[11px] text-[#5B6478]">Relación con {funnel[i - 1].name}: <b className="text-[#14213D]">{funnel[i - 1].value ? `${pctOf(st.value, funnel[i - 1].value).toLocaleString("es-PE")}%` : "—"}</b></p>}
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      </Box>
+
+      <div className="grid min-w-0 grid-cols-1 gap-5 md:grid-cols-2">
+        <Box>
+          <p className="text-sm font-bold text-[#14213D]">Contactos por origen</p>
+          <p className="text-xs text-muted-foreground">De dónde vienen tus contactos</p>
+          <div className="mt-3">
+            {cli.isLoading ? <Skel /> : cli.isError ? <Err retry={() => cli.refetch()} /> : !clientes.length ? <Empty text="Aún no hay contactos." /> : (
+              <ul className="space-y-2" data-testid="list-origen">{porOrigen.map((o) => (
+                <li key={o.name} className="min-w-0">
+                  <div className="flex justify-between gap-2 text-sm"><span className="truncate text-[#5B6478]">{o.name}</span><b className="text-[#14213D]">{o.value}</b></div>
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#EEF1F7]"><div className="h-full origin-left rounded-full bg-[#F28C28]" style={{ transform: `scaleX(${o.value / clientes.length})` }} /></div>
+                </li>))}</ul>
+            )}
+          </div>
+        </Box>
+        <Box>
+          <p className="text-sm font-bold text-[#14213D]">Motivos de pérdida</p>
+          <p className="text-xs text-muted-foreground">Contactos Perdidos y Descartados</p>
+          <div className="mt-3">
+            {cli.isLoading ? <Skel /> : cli.isError ? <Err retry={() => cli.refetch()} /> : !motivos.length ? <Empty text="Ningún contacto cerrado como perdido o descartado." /> : (
+              <ul className="space-y-1.5" data-testid="list-motivos">{motivos.map((m) => (
+                <li key={m.name} className="flex min-w-0 items-center justify-between gap-3 border-b border-[#EEF1F7] pb-1.5 text-sm last:border-0"><span className="min-w-0 break-words text-[#5B6478]">{m.name}</span><b className="shrink-0 text-[#B42F2F]">{m.value}</b></li>))}</ul>
+            )}
+          </div>
         </Box>
       </div>
 
