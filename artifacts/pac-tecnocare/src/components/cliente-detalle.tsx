@@ -4,7 +4,7 @@ import { TempBadge } from "@/components/temp";
 import { Bone, EmptyState, ErrorState } from "@/components/states";
 import { CopyButton } from "@/components/copy-button";
 import { StageActions } from "@/components/stage-actions";
-import { contactBucket, normalizeStage } from "@/lib/contact-stages";
+import { contactBucket, displayStage, lossReason } from "@/lib/contact-stages";
 import { useReunionesCliente } from "@/hooks/use-pac-data";
 import { formatFecha, textoOGuion } from "@/lib/format";
 import type { Cliente } from "@/lib/types";
@@ -21,7 +21,7 @@ export function ClienteDetalle({ cliente, onClose }: { cliente: Cliente | null; 
         {cliente && (
           <>
             <SheetHeader className="text-left">
-              <div className="flex items-center gap-2">{contactBucket(cliente) === "clientes" ? <span className="rounded-md bg-[#1F9D61] px-2 py-0.5 text-[11px] font-semibold text-white">Cliente</span> : contactBucket(cliente) === "leads" ? <span className="rounded-md border border-dashed border-[#B9C2D6] px-2 py-0.5 text-[11px] font-semibold text-[#5B6478]">Sin respuesta</span> : <TempBadge value={cliente.temperatura_actual} />}<span className="text-xs text-muted-foreground" data-testid="text-detalle-etapa">{normalizeStage(cliente.etapa_actual)}</span></div>
+              <div className="flex items-center gap-2">{contactBucket(cliente) === "clientes" ? <span className="rounded-md bg-[#1F9D61] px-2 py-0.5 text-[11px] font-semibold text-white">Cliente</span> : contactBucket(cliente) === "leads" ? <span className="rounded-md border border-dashed border-[#B9C2D6] px-2 py-0.5 text-[11px] font-semibold text-[#5B6478]">Sin respuesta</span> : <TempBadge value={cliente.temperatura_actual} />}<span className="text-xs text-muted-foreground" data-testid="text-detalle-etapa">{displayStage(cliente)}</span></div>
               <SheetTitle className="text-xl text-[#14213D]" data-testid="text-detalle-nombre">{textoOGuion(cliente.nombre, "Cliente sin nombre")}</SheetTitle>
               <SheetDescription>{[cliente.especialidad, cliente.institucion].filter(Boolean).join(" · ") || "Sin especialidad ni institución registradas"}</SheetDescription>
             </SheetHeader>
@@ -38,7 +38,7 @@ export function ClienteDetalle({ cliente, onClose }: { cliente: Cliente | null; 
               {(() => { const x = cliente as Cliente & { origen?: string | null; motivo_perdida?: string | null; fecha_cierre?: string | null }; return <>
                 <Field label="Origen" value={textoOGuion(x.origen ?? null, "Sin origen")} />
                 <Field label="Fecha de cierre" value={x.fecha_cierre ? formatFecha(x.fecha_cierre) : "—"} />
-                {x.motivo_perdida && <div className="col-span-2"><Field label="Motivo" value={x.motivo_perdida} /></div>}
+                {lossReason(cliente) && <div className="col-span-2"><Field label="Motivo" value={lossReason(cliente)!} /></div>}
               </>; })()}
               <div className="col-span-2"><Field label="Siguiente paso" value={textoOGuion(cliente.proximo_contacto_motivo, "Sin definir")} /></div>
             </dl>

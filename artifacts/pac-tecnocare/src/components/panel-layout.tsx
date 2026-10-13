@@ -78,7 +78,7 @@ export function PanelLayout({ children }: { children: ReactNode }) {
       <aside className="fixed inset-y-0 left-0 hidden w-[208px] bg-[#14213D] md:block">{nav}</aside>
       <header className="sticky top-0 z-30 flex items-center justify-between bg-[#14213D] px-4 py-3 md:hidden">
         <Logo light size="sm" />
-        <div className="flex items-center gap-2"><VoiceNoteButton compact />
+        <div className="flex items-center gap-2">
         <button onClick={() => setOpen(true)} aria-label="Abrir menú" data-testid="button-menu" className="rounded-md p-1.5 text-white hover:bg-white/10"><Menu className="h-5 w-5" /></button></div>
       </header>
       {open && (
@@ -90,7 +90,7 @@ export function PanelLayout({ children }: { children: ReactNode }) {
           </aside>
         </div>
       )}
-      <main className="md:pl-[208px]"><div className="mx-auto max-w-6xl px-4 py-6 sm:px-7 sm:py-8"><div className="mb-2 hidden justify-end md:flex"><VoiceNoteButton /></div>{children}</div></main>
+      <main className="md:pl-[208px]"><div className="mx-auto max-w-6xl px-4 py-6 sm:px-7 sm:py-8">{children}</div></main>
     </div>
   );
 }
@@ -102,7 +102,7 @@ export function PageHeader({ eyebrow, title, action }: { eyebrow?: string; title
         {eyebrow && <p className="text-xs text-muted-foreground" data-testid="text-greeting">{eyebrow}</p>}
         <h1 className="text-2xl font-bold tracking-tight text-[#14213D]" data-testid="text-page-title">{title}</h1>
       </div>
-      {action}
+       <div className="ml-auto flex shrink-0 items-center gap-2">{action}<VoiceNoteButton /></div>
     </div>
   );
 }

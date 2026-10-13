@@ -8,7 +8,7 @@ import type { Cliente } from "@/lib/types";
 type Temp = "Frio" | "Tibio" | "Caliente";
 type Mode = null | "interesado" | "descartar" | "ganado" | "perdido";
 const TEMPS: { v: Temp; label: string; cls: string }[] = [
-  { v: "Frio", label: "Frío", cls: "border-[#8A94A8] text-[#5B6478]" },
+  { v: "Frio", label: "Frio", cls: "border-[#8A94A8] text-[#5B6478]" },
   { v: "Tibio", label: "Tibio", cls: "border-[#2F6FDB] text-[#2F6FDB]" },
   { v: "Caliente", label: "Caliente", cls: "border-[#F28C28] text-[#B85F0B]" },
 ];

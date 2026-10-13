@@ -16,6 +16,9 @@ export interface Cliente {
   origen: string | null;
   motivo_perdida: string | null;
   fecha_cierre: string | null;
+  /** Read-only enrichment from existing reuniones; not database columns. */
+  tiene_reuniones?: boolean;
+  objeciones_ultima_reunion?: string | null;
 }
 
 export interface Reunion {

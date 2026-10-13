@@ -4,6 +4,7 @@ import { useAuth } from "@/auth/auth-provider";
 import { todayLima } from "@/lib/format";
 import type { Cliente, Reunion, ReunionConCliente } from "@/lib/types";
 import { contactBucket } from "@/lib/contact-stages";
+import { normalizarTemp } from "@/lib/temperatura";
 
 const PAGE = 1000;
 const STALE = 60_000;
@@ -35,8 +36,26 @@ export function useClientes() {
     enabled,
     staleTime: STALE,
     refetchOnWindowFocus: true,
-    queryFn: () => fetchAll<Cliente>((f, t) =>
-      requireSupabase().from("clientes").select(CLIENTE_COLS).order("created_at", { ascending: false }).order("id").range(f, t) as unknown as PromiseLike<{ data: Cliente[] | null; error: unknown }>),
+    queryFn: async () => {
+      const sb = requireSupabase();
+      const clientes = await fetchAll<Cliente>((f, t) =>
+        sb.from("clientes").select(CLIENTE_COLS).order("created_at", { ascending: false }).order("id").range(f, t) as unknown as PromiseLike<{ data: Cliente[] | null; error: unknown }>);
+      type MeetingSummary = Pick<Reunion, "cliente_id" | "objeciones_detectadas">;
+      const latest = new Map<string, MeetingSummary>();
+      for (let i = 0; i < clientes.length; i += 200) {
+        const ids = clientes.slice(i, i + 200).map((c) => c.id);
+        const reuniones = await fetchAll<MeetingSummary>((f, t) =>
+          sb.from("reuniones").select("id,cliente_id,fecha_reunion,objeciones_detectadas").in("cliente_id", ids)
+            .order("fecha_reunion", { ascending: false, nullsFirst: false }).order("id", { ascending: false }).range(f, t) as unknown as PromiseLike<{ data: MeetingSummary[] | null; error: unknown }>);
+        for (const r of reuniones) {
+          if (r.cliente_id != null && !latest.has(String(r.cliente_id))) latest.set(String(r.cliente_id), r);
+        }
+      }
+      return clientes.map((c) => ({
+        ...c, tiene_reuniones: latest.has(String(c.id)),
+        objeciones_ultima_reunion: latest.get(String(c.id))?.objeciones_detectadas ?? null,
+      }));
+    },
   });
 }
 
@@ -48,7 +67,7 @@ export function useKpis() {
   const rows = q.data;
   return { ...q, data: rows ? {
     leads: rows.filter((c) => contactBucket(c) === "leads").length,
-    calientes: rows.filter((c) => contactBucket(c) === "oportunidades" && c.temperatura_actual === "Caliente").length,
+    calientes: rows.filter((c) => contactBucket(c) === "oportunidades" && normalizarTemp(c.temperatura_actual) === "Caliente").length,
     hoy: rows.filter((c) => c.proximo_contacto_fecha?.slice(0, 10) === fecha).length,
     clientes: rows.filter((c) => contactBucket(c) === "clientes").length,
     fecha,

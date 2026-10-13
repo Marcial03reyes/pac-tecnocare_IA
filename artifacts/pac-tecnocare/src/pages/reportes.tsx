@@ -4,7 +4,8 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { PageHeader } from "@/components/panel-layout";
 import { useClientes, useReuniones } from "@/hooks/use-pac-data";
 import { usePageMeta } from "@/hooks/use-page-meta";
-import { contactBucket, normalizeStage } from "@/lib/contact-stages";
+import { contactBucket, normalizeStage, orderStageCounts, lossReason, displayStage } from "@/lib/contact-stages";
+import { normalizarTemp } from "@/lib/temperatura";
 import type { Cliente } from "@/lib/types";
 
 type ClienteExt = Cliente & { origen?: string | null; motivo_perdida?: string | null };
@@ -43,9 +44,9 @@ export default function ReportesPage() {
   const reu = useReuniones();
   const clientes = useMemo(() => cli.data ?? [], [cli.data]);
   const reuniones = useMemo(() => reu.data ?? [], [reu.data]);
-  const porTemp = useMemo(() => count(clientes, (c) => c.temperatura_actual, "Sin temperatura"), [clientes]);
-  const porEtapaReu = useMemo(() => count(reuniones, (r) => r.etapa, SIN), [reuniones]);
-  const porEtapaCli = useMemo(() => count(clientes, (c) => normalizeStage(c.etapa_actual), SIN), [clientes]);
+  const porTemp = useMemo(() => count(clientes, (c) => normalizarTemp(c.temperatura_actual) === "Sin dato" ? "Sin temperatura" : normalizarTemp(c.temperatura_actual), "Sin temperatura"), [clientes]);
+  const porEtapaReu = useMemo(() => orderStageCounts(count(reuniones, (r) => normalizeStage(r.etapa), SIN)), [reuniones]);
+  const porEtapaCli = useMemo(() => orderStageCounts(count(clientes, displayStage, SIN)), [clientes]);
   const funnel = useMemo(() => {
     const b = { leads: 0, oportunidades: 0, clientes: 0 };
     clientes.forEach((c) => { const k = contactBucket(c); if (k in b) b[k as keyof typeof b]++; });
@@ -57,7 +58,7 @@ export default function ReportesPage() {
   }, [clientes]);
   const funnelTotal = funnel[0].value;
   const porOrigen = useMemo(() => count(clientes as ClienteExt[], (c) => c.origen, "Sin origen"), [clientes]);
-  const motivos = useMemo(() => count((clientes as ClienteExt[]).filter((c) => ["Perdido", "Descartado"].includes(normalizeStage(c.etapa_actual))), (c) => c.motivo_perdida, "Sin motivo"), [clientes]);
+  const motivos = useMemo(() => count(clientes.filter((c) => ["Perdido", "Descartado"].includes(normalizeStage(c.etapa_actual))), lossReason, "Sin motivo"), [clientes]);
   const conProx = clientes.filter((c) => c.proximo_contacto_fecha).length;
   const pct = clientes.length ? Math.round((conProx / clientes.length) * 1000) / 10 : 0;
 
@@ -98,7 +99,7 @@ export default function ReportesPage() {
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <p className="text-sm font-bold text-[#14213D]">Lead → Oportunidad → Cliente</p>
-            <p className="text-xs text-muted-foreground">Estimación con etapas actuales: conteos acumulados de cartera activa. No es conversión histórica; excluye cerrados y sin clasificar.</p>
+            <p className="text-xs text-muted-foreground">Estimación con etapas actuales: conteos acumulados de cartera activa. No es conversión histórica; excluye cerrados.</p>
           </div>
           <span className="rounded-full bg-[#EAF1FC] px-3 py-1 text-[11px] font-semibold text-[#2F6FDB]">Etapa actual</span>
         </div>

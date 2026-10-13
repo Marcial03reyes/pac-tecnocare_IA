@@ -35,7 +35,7 @@ export function useContactStage() {
       return updateContactStage(requireSupabase(), input, uid);
     },
     onSuccess: (saved) => {
-      qc.setQueryData<Cliente[]>(["pac", uid, "clientes"], (old) => old?.map((c) => String(c.id) === String(saved.id) ? saved : c));
+      qc.setQueryData<Cliente[]>(["pac", uid, "clientes"], (old) => old?.map((c) => String(c.id) === String(saved.id) ? { ...c, ...saved } : c));
     },
     onSettled: async () => {
       await qc.invalidateQueries({ queryKey: ["pac", uid] });

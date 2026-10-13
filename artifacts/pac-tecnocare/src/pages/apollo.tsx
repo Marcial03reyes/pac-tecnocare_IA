@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { Loader2, MapPin, RotateCw, X, MessageCircle, Mail, ExternalLink, ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { VoiceNoteButton } from "@/components/voice-note-modal";
 import { useContactApollo, contactChannelUrl } from "@/hooks/use-contact-apollo";
 import { useClientes } from "@/hooks/use-pac-data";
 import { usePageMeta } from "@/hooks/use-page-meta";
@@ -119,10 +120,13 @@ export default function ApolloPage() {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_54%,rgba(47,111,219,.28),transparent_62%)]" />
         <div className="pointer-events-none absolute inset-0 opacity-[.07] [background-image:radial-gradient(#fff_1px,transparent_1px)] [background-size:22px_22px]" />
 
-        <header className="pointer-events-none absolute left-5 top-5 z-30 sm:left-7 sm:top-6">
+        <header className="absolute left-5 right-5 top-5 z-30 flex items-start justify-between gap-3 sm:left-7 sm:right-7 sm:top-6">
+          <div className="pointer-events-none min-w-0">
           <p className="text-[10px] font-bold tracking-[.28em] text-[#F28C28]">APOLLO · PROSPECCIÓN</p>
           <h1 className="mt-1 text-2xl font-bold leading-tight text-white sm:text-[32px]">Leads cerca de TECNOCARE</h1>
           <p className="mt-2 text-[10px] text-[#B9C2D6]" data-testid="text-datos-ejemplo">Datos de ejemplo · integración Apollo próximamente</p>
+          </div>
+          <div className="shrink-0"><VoiceNoteButton compact /></div>
         </header>
 
         <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">

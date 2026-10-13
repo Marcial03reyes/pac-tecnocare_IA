@@ -42,7 +42,7 @@ All content in Spanish. Match the supplied TECNOCARE storyboard references: Inte
 
 ## Contact lifecycle
 
-Stages: Lead, Interesado, Demo, Cotización, Negociación, Ganado, Perdido, Descartado. Treat legacy Prospecto/Prospecto Apollo as Lead without migrating rows. Unknown stages remain inspectable. Leads show “Sin respuesta”, opportunities have temperature/score, won sales are Clientes, closed records retain reasons. Loss requires a reason; wins/losses set the Lima closing date. Existing origen, motivo_perdida, fecha_cierre fields must be used. Funnel percentages are a current-stage snapshot, not historical conversion: no stage history is available.
+The meeting-analysis copilot owns the exact ordered stage contract: Lead, Primer contacto, Interesado - evaluando, Información pendiente, Demo agendada, Demo realizada, Negociación, Esperando decisión, En pausa, Ganado, Perdido, Descartado. Leads are Lead or blank stage without meetings. All unknown stages and blank stages with meetings are Oportunidades; never show a Sin clasificar tab or unknown-stage warning. “Respondió con interés” writes Interesado - evaluando. Temperature values are Frio/Tibio/Caliente; normalize incoming Frío to Frio. For Perdido with no explicit reason, display only the latest meeting's objections with “(según última reunión)”, without writing the inferred reason to the database. Leads show “Sin respuesta”, won sales are Clientes, Perdido/Descartado are Cerrados. Loss requires a reason; wins/losses set the Lima closing date. Existing origen, motivo_perdida, fecha_cierre fields must be used. Funnel percentages are a current-stage snapshot, not historical conversion: no stage history is available.
 
 ## Gotchas
 

@@ -1,26 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { Search, Users, ChevronRight, AlertTriangle } from "lucide-react";
+import { Search, Users, ChevronRight } from "lucide-react";
 import { useClientes } from "@/hooks/use-pac-data";
 import { ScoreBar, TempBadge } from "@/components/temp";
 import { Bone, EmptyState, ErrorState } from "@/components/states";
 import { ClienteDetalle } from "@/components/cliente-detalle";
 import { StageActions } from "@/components/stage-actions";
 import { textoOGuion } from "@/lib/format";
-import { contactBucket, normalizeStage } from "@/lib/contact-stages";
+import { contactBucket, normalizeStage, lossReason } from "@/lib/contact-stages";
 import { normalizarTemp, TEMP_META } from "@/lib/temperatura";
 import type { Cliente } from "@/lib/types";
 
-type Tab = "leads" | "oportunidades" | "clientes" | "cerrados" | "otros";
+type Tab = "leads" | "oportunidades" | "clientes" | "cerrados";
 const TABS: { k: Tab; label: string; hint: string }[] = [
   { k: "leads", label: "Leads", hint: "Contactados, esperando respuesta" },
-  { k: "oportunidades", label: "Oportunidades", hint: "Interesado, Demo, Cotización, Negociación" },
+  { k: "oportunidades", label: "Oportunidades", hint: "Desde Primer contacto hasta En pausa; incluye etapas desconocidas" },
   { k: "clientes", label: "Clientes", hint: "Ventas ganadas" },
   { k: "cerrados", label: "Cerrados", hint: "Perdidos y descartados" },
-  { k: "otros", label: "Sin clasificar", hint: "Etapas no reconocidas; se muestran tal cual, sin cambios" },
 ];
 const isTab = (v: string | null): v is Tab => TABS.some((t) => t.k === v);
-export const motivoDe = (c: Cliente) => (c as Cliente & { motivo_perdida?: string | null }).motivo_perdida ?? null;
+export const motivoDe = lossReason;
 
 export function ClientesTable() {
   const q = useClientes();
@@ -43,7 +42,7 @@ export function ClientesTable() {
 
   const all = useMemo(() => q.data ?? [], [q.data]);
   const counts = useMemo(() => {
-    const c: Record<Tab, number> = { leads: 0, oportunidades: 0, clientes: 0, cerrados: 0, otros: 0 };
+    const c: Record<Tab, number> = { leads: 0, oportunidades: 0, clientes: 0, cerrados: 0 };
     all.forEach((x) => { c[contactBucket(x)]++; });
     return c;
   }, [all]);
@@ -59,7 +58,7 @@ export function ClientesTable() {
 
   if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} retrying={q.isFetching} />;
 
-  const visibleTabs = TABS.filter((t) => t.k !== "otros" || counts.otros > 0 || tab === "otros");
+  const visibleTabs = TABS;
   const heads = tab === "leads" ? ["Contacto", "Institución", "Respuesta", "Siguiente paso", "Acciones", ""]
     : tab === "oportunidades" ? ["Contacto", "Institución", "Etapa", "Puntaje", "Temperatura", "Siguiente paso", ""]
     : tab === "clientes" ? ["Contacto", "Institución", "Especialidad", "Estado", "Siguiente paso", ""]
@@ -69,12 +68,6 @@ export function ClientesTable() {
 
   return (
     <div className="space-y-3">
-      {counts.otros > 0 && tab !== "otros" && (
-        <button onClick={() => setParams({ tab: "otros" })} data-testid="notice-sin-clasificar"
-          className="flex w-full items-center gap-2 rounded-lg border border-[#F4D9B8] bg-[#FFF7EE] px-3 py-2 text-left text-xs text-[#8A4B0B] hover:bg-[#FFF1E3]">
-          <AlertTriangle className="h-4 w-4 shrink-0" />{counts.otros} contacto{counts.otros === 1 ? " tiene" : "s tienen"} una etapa no reconocida. No se modificaron. <span className="font-semibold underline">Revisar</span>
-        </button>
-      )}
       <div className="pac-card fade-up overflow-hidden">
         <div role="tablist" className="flex gap-1 overflow-x-auto border-b px-2 pt-2">
           {visibleTabs.map((t) => (
@@ -124,10 +117,6 @@ export function ClientesTable() {
                   {tab === "cerrados" && <>
                     <td className="px-4 py-3"><span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${normalizeStage(c.etapa_actual) === "Perdido" ? "bg-[#FDECEC] text-[#B42F2F]" : "bg-[#EEF1F7] text-[#5B6478]"}`}>{normalizeStage(c.etapa_actual)}</span></td>
                     <td className="max-w-[320px] px-4 py-3 text-[#3A4560]">{textoOGuion(motivoDe(c), "Sin motivo")}</td>
-                  </>}
-                  {tab === "otros" && <>
-                    <td className="px-4 py-3"><span className="rounded-md bg-[#FFF1E3] px-2 py-0.5 text-[11px] font-semibold text-[#B85F0B]">{textoOGuion(c.etapa_actual, "Sin etapa")}</span></td>
-                    <td className="px-4 py-3 text-[#3A4560]">{textoOGuion(c.proximo_contacto_motivo, "Sin definir")}</td>
                   </>}
                   <td className="px-2 py-3"><ChevronRight className="h-4 w-4 text-[#C2C9D6] transition group-hover:translate-x-0.5 group-hover:text-[#2F6FDB]" /></td>
                 </tr>
