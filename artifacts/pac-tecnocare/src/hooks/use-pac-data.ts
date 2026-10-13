@@ -96,7 +96,7 @@ export function useReunionesCliente(clienteId: Cliente["id"] | null) {
     refetchOnWindowFocus: true,
     queryFn: () => fetchAll<Reunion>((f, t) =>
       requireSupabase().from("reuniones").select(REUNION_COLS).eq("cliente_id", clienteId as string)
-        .order("fecha_reunion", { ascending: false, nullsFirst: false }).order("id").range(f, t) as unknown as PromiseLike<{ data: Reunion[] | null; error: unknown }>),
+        .order("fecha_reunion", { ascending: false, nullsFirst: false }).order("id", { ascending: false }).range(f, t) as unknown as PromiseLike<{ data: Reunion[] | null; error: unknown }>),
   });
 }
 
@@ -110,7 +110,7 @@ export function useReuniones() {
     queryFn: async (): Promise<ReunionConCliente[]> => {
       const sb = requireSupabase();
       const reuniones = await fetchAll<Reunion>((f, t) =>
-        sb.from("reuniones").select(REUNION_COLS).order("fecha_reunion", { ascending: false, nullsFirst: false }).order("id").range(f, t) as unknown as PromiseLike<{ data: Reunion[] | null; error: unknown }>);
+        sb.from("reuniones").select(REUNION_COLS).order("fecha_reunion", { ascending: false, nullsFirst: false }).order("id", { ascending: false }).range(f, t) as unknown as PromiseLike<{ data: Reunion[] | null; error: unknown }>);
       const ids = Array.from(new Set(reuniones.map((r) => r.cliente_id).filter((v): v is string | number => v != null)));
       const map = new Map<string, ReunionConCliente["cliente"]>();
       for (let i = 0; i < ids.length; i += 200) {

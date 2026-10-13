@@ -34,7 +34,7 @@ _Populate as you build — short repo map plus pointers to the source-of-truth f
 
 ## Product
 
-Public equipment and community information; protected commercial dashboard; client details and meeting history; scheduled telephone followups; meeting summaries and copyable WhatsApp drafts. Apollo displays clearly labelled local example leads with contact creation. Reports combine real database aggregates with a distinctly labelled illustrative projection. Granola recording remains “Próximamente”.
+Public equipment and community information; protected commercial dashboard; editable contacts with stage, temperature and origin filters; scheduled followups; manual meeting entry; structured copilot analysis from existing reuniones.analisis; WhatsApp/email/call composers and a mobile-accessible stage board at /panel/embudo. Apollo displays clearly labelled local example leads with contact creation. Reports combine real database aggregates with a distinctly labelled illustrative projection. Granola recording remains “Próximamente”.
 
 ## User preferences
 
@@ -46,7 +46,7 @@ The meeting-analysis copilot owns the exact ordered stage contract: Lead, Primer
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+Do not create or modify database tables for the CRM. Direct-contact links open the user's composer/dialer, never send automatically. Deleting a contact explicitly confirms that its meetings will also be removed. Manual meeting inserts and contact updates use separate existing-table requests: if the second request fails, preserve the saved meeting and retry only contact synchronization, reporting the partial save clearly. No server-side transaction function is assumed to exist.
 
 ## Pointers
 

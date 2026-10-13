@@ -1,0 +1,1 @@
+- [CRM data ownership](crm-data-ownership.md) — existing Supabase and external copilot contracts are not owned by frontend CRM extensions.

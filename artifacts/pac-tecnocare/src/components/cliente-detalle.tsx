@@ -1,22 +1,41 @@
-import { Mail, Phone, Mic } from "lucide-react";
+import { Mic, Pencil, CalendarPlus, Trash2, Plus } from "lucide-react";
+import { useState } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { TempBadge } from "@/components/temp";
 import { Bone, EmptyState, ErrorState } from "@/components/states";
-import { CopyButton } from "@/components/copy-button";
 import { StageActions } from "@/components/stage-actions";
 import { contactBucket, displayStage, lossReason } from "@/lib/contact-stages";
 import { useReunionesCliente } from "@/hooks/use-pac-data";
 import { formatFecha, textoOGuion } from "@/lib/format";
 import type { Cliente } from "@/lib/types";
+import { useClientes } from "@/hooks/use-pac-data";
+import { useCrmMutation } from "@/hooks/use-crm-mutation";
+import { ContactEditor } from "./contact-editor";
+import { MeetingForm } from "./meeting-form";
+import { ScheduleForm } from "./schedule-form";
+import { QuickContactControls } from "./quick-contact-controls";
+import { DirectContactActions } from "./direct-contact-actions";
+import { MeetingCard } from "./meeting-card";
+import { FormShell } from "./crm-form-shell";
 
 function Field({ label, value }: { label: string; value: string }) {
   return <div><dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</dt><dd className="mt-0.5 text-sm text-[#14213D]">{value}</dd></div>;
 }
 
 export function ClienteDetalle({ cliente, onClose }: { cliente: Cliente | null; onClose: () => void }) {
+  const clientesQuery = useClientes();
+  // The drawer also opens from Llamadas/Embudo; consume refreshed canonical data.
+  cliente = clientesQuery.data?.find((c) => String(c.id) === String(cliente?.id)) ?? cliente;
   const q = useReunionesCliente(cliente?.id ?? null);
+  const [modal, setModal] = useState<"edit" | "schedule" | "meeting" | "delete" | null>(null);
+  const mutation = useCrmMutation();
+  const close = () => { setModal(null); onClose(); };
+  const remove = async () => {
+    if (!cliente) return;
+    try { await mutation.mutateAsync({ kind: "delete", cliente }); close(); } catch { /* retain confirmation and report partial errors */ }
+  };
   return (
-    <Sheet open={!!cliente} onOpenChange={(o) => !o && onClose()}>
+    <Sheet open={!!cliente} onOpenChange={(o) => !o && !mutation.isPending && close()}>
       <SheetContent className="w-full overflow-y-auto bg-[#F4F6FB] sm:max-w-lg">
         {cliente && (
           <>
@@ -25,11 +44,15 @@ export function ClienteDetalle({ cliente, onClose }: { cliente: Cliente | null; 
               <SheetTitle className="text-xl text-[#14213D]" data-testid="text-detalle-nombre">{textoOGuion(cliente.nombre, "Cliente sin nombre")}</SheetTitle>
               <SheetDescription>{[cliente.especialidad, cliente.institucion].filter(Boolean).join(" · ") || "Sin especialidad ni institución registradas"}</SheetDescription>
             </SheetHeader>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {cliente.telefono && <a href={`tel:${cliente.telefono.replace(/\s/g, "")}`} className="inline-flex items-center gap-1.5 rounded-md bg-[#F28C28] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#E57D17]" data-testid="link-detalle-llamar"><Phone className="h-3.5 w-3.5" /> Llamar</a>}
-              {cliente.email && <a href={`mailto:${cliente.email}`} className="inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-xs font-semibold text-[#14213D] hover:border-[#2F6FDB]" data-testid="link-detalle-email"><Mail className="h-3.5 w-3.5" /> Correo</a>}
+            <div className="mt-4"><DirectContactActions key={String(cliente.id)} cliente={cliente} borrador={q.data?.[0]?.borrador_whatsapp} disabled={q.isLoading || q.isError} onRegister={() => setModal("meeting")} /></div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button className="inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-2 text-xs font-semibold" onClick={() => setModal("edit")}><Pencil className="h-3.5 w-3.5" />Editar contacto</button>
+              <button className="inline-flex items-center gap-1 rounded-md border bg-white px-2.5 py-2 text-xs font-semibold" onClick={() => setModal("schedule")}><CalendarPlus className="h-3.5 w-3.5" />Agendar seguimiento</button>
+              <button className="inline-flex items-center gap-1 rounded-md bg-[#2F6FDB] px-2.5 py-2 text-xs font-semibold text-white" onClick={() => setModal("meeting")}><Plus className="h-3.5 w-3.5" />Registrar reunión</button>
+              <button className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-white px-2.5 py-2 text-xs font-semibold text-red-700" onClick={() => setModal("delete")}><Trash2 className="h-3.5 w-3.5" />Eliminar contacto</button>
             </div>
             <div className="mt-3"><StageActions cliente={cliente} /></div>
+            <div className="mt-3"><QuickContactControls cliente={cliente} /></div>
             <dl className="pac-card mt-4 grid grid-cols-2 gap-4 p-4">
               <Field label="Teléfono" value={textoOGuion(cliente.telefono)} />
               <Field label="Correo" value={textoOGuion(cliente.email)} />
@@ -47,26 +70,15 @@ export function ClienteDetalle({ cliente, onClose }: { cliente: Cliente | null; 
               {q.isLoading && [0, 1].map((i) => <div key={i} className="pac-card space-y-2 p-4"><Bone className="h-3 w-24" /><Bone className="h-3 w-full" /><Bone className="h-3 w-2/3" /></div>)}
               {q.isError && <ErrorState error={q.error} onRetry={() => q.refetch()} retrying={q.isFetching} />}
               {q.data?.length === 0 && <div className="pac-card"><EmptyState icon={<Mic className="h-5 w-5" />} title="Sin reuniones registradas" text="Cuando se registre una reunión con este cliente aparecerá aquí." /></div>}
-              {q.data?.map((r) => (
-                <article key={String(r.id)} className="pac-card fade-up p-4" data-testid={`card-reunion-${r.id}`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-[#14213D]">{formatFecha(r.fecha_reunion, true)}</span>
-                    <TempBadge value={r.temperatura} />
-                  </div>
-                  {r.etapa && <p className="mt-1 text-[11px] text-muted-foreground">Etapa: {r.etapa}</p>}
-                  <p className="mt-2 text-sm leading-relaxed text-[#3A4560]">{textoOGuion(r.transcripcion_resumen, "Sin resumen")}</p>
-                  {r.objeciones_detectadas && <p className="mt-2 text-xs"><span className="font-semibold text-[#14213D]">Objeciones: </span><span className="text-[#5B6478]">{r.objeciones_detectadas}</span></p>}
-                  {r.acuerdos_proximo_paso && <p className="mt-1 text-xs"><span className="font-semibold text-[#14213D]">Acuerdos: </span><span className="text-[#5B6478]">{r.acuerdos_proximo_paso}</span></p>}
-                  {r.feedback_estrategico && <p className="mt-1 text-xs"><span className="font-semibold text-[#2F6FDB]">Feedback: </span><span className="text-[#5B6478]">{r.feedback_estrategico}</span></p>}
-                  {r.borrador_whatsapp && (
-                    <div className="mt-3 rounded-md bg-[#F4F6FB] p-3">
-                      <div className="mb-1 flex items-center justify-between"><span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Borrador WhatsApp</span><CopyButton text={r.borrador_whatsapp} testId={`button-copiar-detalle-${r.id}`} /></div>
-                      <p className="whitespace-pre-wrap text-xs text-[#3A4560]">{r.borrador_whatsapp}</p>
-                    </div>
-                  )}
-                </article>
-              ))}
+              {q.data?.map((r) => <MeetingCard key={String(r.id)} reunion={r} cliente={cliente!} onRegister={() => setModal("meeting")} />)}
             </div>
+            {modal === "edit" && <ContactEditor key={String(cliente.id)} cliente={cliente} onClose={() => setModal(null)} />}
+            {modal === "schedule" && <ScheduleForm cliente={cliente} onClose={() => setModal(null)} />}
+            {modal === "meeting" && <MeetingForm cliente={cliente} onClose={() => setModal(null)} />}
+            {modal === "delete" && <FormShell title="¿Eliminar contacto?" description="Se borrarán también sus reuniones. Esta acción no se puede deshacer." onClose={() => setModal(null)} busy={mutation.isPending}>
+              <p className="text-sm">Confirma que deseas eliminar a <strong>{cliente.nombre || "este contacto"}</strong>.</p>
+              <div className="flex justify-end gap-2"><button className="rounded-md border px-3 py-2 text-sm" disabled={mutation.isPending} onClick={() => setModal(null)}>Cancelar</button><button className="rounded-md bg-red-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50" disabled={mutation.isPending} onClick={remove}>{mutation.isPending ? "Eliminando…" : "Sí, eliminar contacto y reuniones"}</button></div>
+            </FormShell>}
           </>
         )}
       </SheetContent>

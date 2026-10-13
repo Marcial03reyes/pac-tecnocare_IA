@@ -1,0 +1,29 @@
+Ronda 3: CRM editable y análisis del copiloto. Mantén todo lo que funciona. No crees ni modifiques tablas.
+
+1. CONTACTOS
+- Botón "Nuevo contacto": nombre (obligatorio), institución, especialidad, teléfono, email, origen (Apollo, Evento, Referido, Web, Otro), etapa, temperatura, próximo contacto (fecha y motivo).
+- En el detalle: editar todos los campos; selectores rápidos de etapa y temperatura; botón "Agendar seguimiento" (fecha + motivo).
+- Buscador por nombre o institución y filtros por etapa, temperatura y origen.
+- Eliminar solo con confirmación ("Se borrarán también sus reuniones").
+
+2. REGISTRAR REUNIÓN A MANO (para cuando no se grabó con Granola)
+- En el detalle: "Registrar reunión" con fecha, etapa, temperatura, resumen, objeciones, acuerdos/próximo paso y borrador de WhatsApp. Inserta en public.reuniones con origen_audio = 'Manual' y actualiza en clientes ultima_reunion, etapa_actual y temperatura_actual (y el próximo contacto si se indicó).
+
+3. CONTACTO DIRECTO desde el detalle y desde Llamadas
+- WhatsApp: wa.me/<teléfono solo dígitos, agrega 51 si tiene 9 dígitos>?text=<borrador_whatsapp de la última reunión>; si no hay borrador, un saludo breve.
+- Correo: mailto: con asunto "TECNOCARE – seguimiento" y el borrador en el cuerpo.
+- Llamar: tel:. Al volver, ofrecer "¿Registrar resultado?" que abre el formulario de reunión.
+
+4. ANÁLISIS DEL COPILOTO en el detalle de cada reunión (columna analisis, jsonb; muestra solo los campos que existan):
+- Etapa y temperatura con su badge.
+- Demo: si analisis.demo.acordada, muestra día, hora y lugar, y analisis.demo.falta_confirmar como alerta amarilla.
+- Equipos y competencia (analisis.equipos_y_competencia).
+- Recomendación (analisis.recomendacion) destacada en un recuadro.
+- Objeciones, acuerdos y borrador de WhatsApp con botón "Copiar" y botón "Enviar por WhatsApp".
+- Si analisis viene vacío, muestra solo los campos de texto de la reunión.
+
+5. EMBUDO
+- Vista "Embudo" en el sidebar con columnas en este orden: Lead, Primer contacto, Interesado - evaluando, Información pendiente, Demo agendada, Demo realizada, Negociación, Esperando decisión, Ganado. (En pausa, Perdido y Descartado van en una fila plegable abajo.)
+- Tarjetas con nombre, institución y color por temperatura. Arrastrar una tarjeta actualiza etapa_actual.
+
+Toasts de éxito o error en cada acción. Todo debe funcionar en celular.

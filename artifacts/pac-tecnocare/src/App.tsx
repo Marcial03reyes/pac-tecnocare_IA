@@ -13,6 +13,7 @@ import LlamadasPage from "@/pages/llamadas";
 import NotasPage from "@/pages/notas";
 import ApolloPage from "@/pages/apollo";
 import ReportesPage from "@/pages/reportes";
+import EmbudoPage from "@/pages/embudo";
 import { AuthProvider } from "@/auth/auth-provider";
 import { Protected } from "@/components/protected";
 import { PanelLayout } from "@/components/panel-layout";
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/login"><RoutedErrorBoundary><LoginPage /></RoutedErrorBoundary></Route>
       <Route path="/panel"><Private><PanelInicio /></Private></Route>
       <Route path="/panel/clientes"><Private><ClientesPage /></Private></Route>
+      <Route path="/panel/embudo"><Private><EmbudoPage /></Private></Route>
       <Route path="/panel/llamadas"><Private><LlamadasPage /></Private></Route>
       <Route path="/panel/notas-de-voz"><Private><NotasPage /></Private></Route>
       <Route path="/panel/apollo"><Private><ApolloPage /></Private></Route>

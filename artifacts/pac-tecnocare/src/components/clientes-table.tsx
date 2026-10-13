@@ -7,7 +7,8 @@ import { Bone, EmptyState, ErrorState } from "@/components/states";
 import { ClienteDetalle } from "@/components/cliente-detalle";
 import { StageActions } from "@/components/stage-actions";
 import { textoOGuion } from "@/lib/format";
-import { contactBucket, normalizeStage, lossReason } from "@/lib/contact-stages";
+import { contactBucket, normalizeStage, lossReason, displayStage, STAGES } from "@/lib/contact-stages";
+import { ORIGINS } from "@/lib/crm-writes";
 import { normalizarTemp, TEMP_META } from "@/lib/temperatura";
 import type { Cliente } from "@/lib/types";
 
@@ -29,6 +30,9 @@ export function ClientesTable() {
   const tab: Tab = isTab(params.get("tab")) ? (params.get("tab") as Tab) : "leads";
   const [selId, setSelId] = useState<string | null>(null);
   const [term, setTerm] = useState("");
+  const [stageFilter, setStageFilter] = useState("");
+  const [tempFilter, setTempFilter] = useState("");
+  const [originFilter, setOriginFilter] = useState("");
 
   const setParams = (next: Record<string, string | null>) => {
     const p = new URLSearchParams(search);
@@ -50,11 +54,14 @@ export function ClientesTable() {
 
   const rows = useMemo(() => {
     const t = term.trim().toLowerCase();
-    const list = all.filter((c) => contactBucket(c) === tab);
+    const list = all.filter((c) => contactBucket(c) === tab
+      && (!stageFilter || displayStage(c) === stageFilter)
+      && (!tempFilter || normalizarTemp(c.temperatura_actual) === tempFilter)
+      && (!originFilter || (originFilter === "__empty" ? !c.origen?.trim() : c.origen === originFilter)));
     const filtered = t ? list.filter((c) => [c.nombre, c.institucion, c.especialidad].some((v) => (v ?? "").toLowerCase().includes(t))) : list;
     if (tab !== "oportunidades") return filtered;
     return [...filtered].sort((a, b) => (TEMP_META[normalizarTemp(b.temperatura_actual)].score ?? 0) - (TEMP_META[normalizarTemp(a.temperatura_actual)].score ?? 0));
-  }, [all, term, tab]);
+  }, [all, term, tab, stageFilter, tempFilter, originFilter]);
 
   if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} retrying={q.isFetching} />;
 
@@ -85,6 +92,18 @@ export function ClientesTable() {
             <input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Buscar contacto, institución…" data-testid="input-buscar-cliente"
               className="w-56 rounded-md border bg-[#F4F6FB] py-1.5 pl-8 pr-3 text-xs outline-none transition focus:border-[#2F6FDB] focus:bg-white" />
           </label>
+        </div>
+        <div className="flex flex-wrap gap-2 border-b px-4 py-3">
+          <select aria-label="Filtrar por etapa" className="max-w-full rounded-md border bg-white px-2 py-2 text-xs" value={stageFilter} onChange={(e) => setStageFilter(e.target.value)}>
+            <option value="">Todas las etapas</option>{[...STAGES, ...Array.from(new Set(all.map(displayStage))).filter((s) => !(STAGES as readonly string[]).includes(s))].map((s) => <option key={s}>{s}</option>)}
+          </select>
+          <select aria-label="Filtrar por temperatura" className="rounded-md border bg-white px-2 py-2 text-xs" value={tempFilter} onChange={(e) => setTempFilter(e.target.value)}>
+            <option value="">Todas las temperaturas</option>{["Frio", "Tibio", "Caliente", "Sin dato"].map((t) => <option key={t} value={t}>{t === "Sin dato" ? "Sin temperatura" : t}</option>)}
+          </select>
+          <select aria-label="Filtrar por origen" className="rounded-md border bg-white px-2 py-2 text-xs" value={originFilter} onChange={(e) => setOriginFilter(e.target.value)}>
+            <option value="">Todos los orígenes</option><option value="__empty">Sin origen</option>{[...ORIGINS, ...Array.from(new Set(all.map((c) => c.origen).filter((o): o is string => !!o))).filter((o) => !(ORIGINS as readonly string[]).includes(o))].map((o) => <option key={o}>{o}</option>)}
+          </select>
+          {(stageFilter || tempFilter || originFilter || term) && <button className="text-xs font-semibold text-[#2F6FDB]" onClick={() => { setStageFilter(""); setTempFilter(""); setOriginFilter(""); setTerm(""); }}>Limpiar filtros</button>}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-[13px]">
