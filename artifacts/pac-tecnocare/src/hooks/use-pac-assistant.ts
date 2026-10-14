@@ -10,8 +10,8 @@ export interface AssistantMessage {
   notice?: string;
   proposalStatus?: "pending" | "confirmed" | "corrected" | "expired";
 }
-interface State { messages: AssistantMessage[]; busy: boolean; error: string | null; operation?: PacChatInput["action"] }
-const empty = (): State => ({ messages: [], busy: false, error: null });
+interface State { messages: AssistantMessage[]; conversationId: string; busy: boolean; error: string | null; operation?: PacChatInput["action"] }
+const empty = (): State => ({ messages: [], conversationId: crypto.randomUUID(), busy: false, error: null });
 function historyOf(messages: AssistantMessage[]): PacChatInput["history"] {
   const history = messages.slice(-40).map((m) => ({
     role: m.role, text: `${m.text}${m.proposal ? `\n[Propuesta ${m.proposalStatus ?? "pending"}: ${m.proposal.title}]\n${m.proposal.fields.map((f) => `${f.label}: ${f.value}`).join("\n")}` : ""}`.slice(0, 16000),
@@ -36,7 +36,7 @@ export function usePacAssistant() {
   async function request(input: PacChatInput): Promise<PacChatReply> {
     const { data, error } = await requireSupabase().auth.getSession();
     if (error || !data.session || data.session.user.id !== uid) throw new Error("Tu sesión cambió o expiró. Vuelve a ingresar al panel.");
-    return pacChat(input, { headers: { Authorization: `Bearer ${data.session.access_token}` }, cache: "no-store" });
+    return pacChat({ ...input, conversationId: latest().conversationId }, { headers: { Authorization: `Bearer ${data.session.access_token}` }, cache: "no-store" });
   }
   async function stillCurrent() {
     const { data } = await requireSupabase().auth.getSession();
@@ -46,7 +46,7 @@ export function usePacAssistant() {
     const info = errorInfo(error);
     update((s) => ({ ...s, error: info.text, messages: s.messages.map((m) => m.proposal?.id === proposalId && info.status === 409
       ? { ...m, proposalStatus: "expired", retryable: false } : m) }));
-    toast({ variant: "destructive", title: "PAC no pudo completar la acción", description: info.text });
+    toast({ variant: "destructive", title: info.code === "provider_busy" ? "Mucha demanda" : "Error del asistente", description: info.text });
   }
   async function send(text: string): Promise<boolean> {
     const cleaned = text.trim();
@@ -58,7 +58,7 @@ export function usePacAssistant() {
     const userMessage: AssistantMessage = previous?.role === "user" && previous.text === cleaned
       ? previous : { id: crypto.randomUUID(), role: "user", text: cleaned };
     if (userMessage !== previous) messages.push(userMessage);
-    update((s) => ({ ...s, busy: true, operation: "message", error: null, messages }));
+    update((s) => ({ ...s, conversationId: s.conversationId ?? crypto.randomUUID(), busy: true, operation: "message", error: null, messages }));
     try {
       const reply = await request({ action: "message", history: historyOf(messages), requestId: userMessage.id });
       if (!(await stillCurrent())) return false;

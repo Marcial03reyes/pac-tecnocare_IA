@@ -9,11 +9,30 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Authenticated progress of one assistant request
+ */
+export const pacChatProgressPathRequestIdMax = 100;
+
+
+
+export const PacChatProgressParams = zod.object({
+  "requestId": zod.coerce.string().max(pacChatProgressPathRequestIdMax)
+})
+
+export const PacChatProgressResponse = zod.object({
+  "state": zod.enum(['thinking', 'retrying', 'fallback', 'done', 'error']),
+  "message": zod.string().optional()
+})
+
+
+/**
  * @summary Asistente PAC authenticated chat and explicitly confirmed writes
  */
 export const pacChatBodyHistoryItemTextMax = 16000;
 
 export const pacChatBodyHistoryMax = 60;
+
+export const pacChatBodyConversationIdMax = 100;
 
 
 
@@ -24,7 +43,8 @@ export const PacChatBody = zod.object({
   "text": zod.string().max(pacChatBodyHistoryItemTextMax)
 })).max(pacChatBodyHistoryMax),
   "confirmationId": zod.string().optional(),
-  "requestId": zod.string().optional().describe('Per-message idempotency key, reused when retrying the same request')
+  "requestId": zod.string().optional().describe('Per-message idempotency key, reused when retrying the same request'),
+  "conversationId": zod.string().max(pacChatBodyConversationIdMax).optional().describe('Opaque conversation identifier, scoped to the authenticated user')
 })
 
 export const PacChatResponse = zod.object({

@@ -4,6 +4,7 @@ import { ArrowUp, Check, Clock3, LoaderCircle, MessageCircle, Mic, MicOff, Rotat
 import { PageHeader } from "@/components/panel-layout";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import { usePacAssistant, type AssistantMessage } from "@/hooks/use-pac-assistant";
+import { AssistantProgress } from "@/components/assistant-progress";
 
 interface SpeechResultItem {
   readonly isFinal: boolean;
@@ -349,7 +350,7 @@ export default function AsistentePage() {
                   <div className="grid h-8 w-8 place-items-center rounded-full bg-[#172944] text-[#F7B66C]"><Sparkles className="h-4 w-4" /></div>
                   <div className="flex items-center gap-2 rounded-xl rounded-tl-sm border border-[#EBE9E4] bg-[#FFFEFC] px-4 py-3 text-[13px] text-[#6D7580]">
                     <span className="flex gap-1" aria-hidden="true"><i className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#D78643]" /><i className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#D78643] [animation-delay:150ms]" /><i className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#D78643] [animation-delay:300ms]" /></span>
-                    {slow && waitingForModel ? "Está tardando un poco; reintentaré o usaré el respaldo si el modelo no está disponible." : waitingForModel ? "Pensando…" : "Procesando…"}
+                    {waitingForModel ? <AssistantProgress requestId={messages.at(-1)?.id ?? ""} slow={slow} /> : "Procesando…"}
                   </div>
                 </div>
               )}

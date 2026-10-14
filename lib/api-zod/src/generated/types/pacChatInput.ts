@@ -15,4 +15,9 @@ export interface PacChatInput {
   confirmationId?: string;
   /** Per-message idempotency key, reused when retrying the same request */
   requestId?: string;
+  /**
+     * Opaque conversation identifier, scoped to the authenticated user
+     * @maxLength 100
+     */
+  conversationId?: string;
 }

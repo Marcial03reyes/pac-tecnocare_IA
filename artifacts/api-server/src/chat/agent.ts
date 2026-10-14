@@ -6,8 +6,9 @@ import { SYSTEM_PROMPT } from "./prompt";
 import { DECLARATIONS } from "./declarations";
 import { ChatError, WRITE_TOOLS, type WriteTool } from "./contracts";
 import { limaToday, readTool } from "./data";
-import { prepareProposal } from "./proposals";
-import { gemini, modelPair, ModelRun, UseFallback } from "./models";
+import { prepareProposal, cancelProposal } from "./proposals";
+import { gemini, modelPair, ModelRun, UseFallback, type Progress } from "./models";
+import { conversation, freshContext, appendUserText } from "./history";
 
 export { MODEL, gemini } from "./models";
 
@@ -44,20 +45,31 @@ function trimResult(value: unknown): unknown {
   };
   return walk(value, 0);
 }
-export async function chatAnswer(sb: SupabaseClient, userId: string, input: PacChatInput, ai = gemini()): Promise<PacChatReply> {
+export async function chatAnswer(sb: SupabaseClient, userId: string, input: PacChatInput, ai = gemini(), onProgress?: (state: Progress) => void): Promise<PacChatReply> {
   const pair = modelPair();
+  const thread = conversation(userId, input.conversationId);
+  const reusable = thread.existing && thread.existing.configuredPrimary === pair.primary &&
+    [pair.primary, pair.fallback].includes(thread.existing.model) ? thread.existing : undefined;
+  const model = reusable?.model ?? pair.primary;
+  const contents = reusable ? reusable.contents : freshContext(input.history);
+  if (reusable) appendUserText(contents, input.history.at(-1)!.text);
+  const commit = (reply: PacChatReply, selectedModel: string, history: Content[]) => {
+    try { thread.save(selectedModel, pair.primary, history); }
+    catch (error) { if (reply.proposal) cancelProposal(reply.proposal.id, userId); throw error; }
+    return reply;
+  };
   try {
-    return await answerWithModel(sb, userId, input, new ModelRun(ai, pair.primary, true));
+    const reply = await answerWithModel(sb, userId, input, new ModelRun(ai, model, true, undefined, onProgress), contents);
+    return commit(reply, model, contents);
   } catch (error) {
     if (!(error instanceof UseFallback)) throw error;
-    // Restart from human-visible history: thought signatures belong to one model.
-    // All earlier tools were reads; proposals are created only after the privacy gate succeeds.
-    const reply = await answerWithModel(sb, userId, input, new ModelRun(ai, pair.fallback, false));
-    return { ...reply, notice: "Usé el modelo de respaldo porque el principal no estaba disponible." };
+    const fallback = model === pair.primary ? pair.fallback : pair.primary;
+    const restarted = freshContext(input.history);
+    const reply = await answerWithModel(sb, userId, input, new ModelRun(ai, fallback, false), restarted);
+    return commit({ ...reply, notice: "Usé el modelo de respaldo porque el principal no estaba disponible." }, fallback, restarted);
   }
 }
-async function answerWithModel(sb: SupabaseClient, userId: string, input: PacChatInput, run: ModelRun): Promise<PacChatReply> {
-  const contents: Content[] = input.history.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.text }] }));
+async function answerWithModel(sb: SupabaseClient, userId: string, input: PacChatInput, run: ModelRun, contents: Content[]): Promise<PacChatReply> {
   const fetchedContacts = new Set<string>();
   const ambiguousIds = new Set<string>();
   const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -73,21 +85,24 @@ async function answerWithModel(sb: SupabaseClient, userId: string, input: PacCha
       },
     });
     const calls = response.functionCalls ?? [];
+    const modelContent = response.candidates?.[0]?.content;
+    if (!modelContent?.parts?.length) throw new ChatError(502, "Error del asistente. Gemini no devolvió contenido válido.");
+    contents.push(modelContent); // EVERY response, including final text: exact parts + thought signatures.
     if (!calls.length) {
-      if (!didConsult) throw new ChatError(503, "No pude verificar la respuesta con el CRM. Prueba otra consulta; no inventaré datos.");
+      if (!didConsult) throw new ChatError(502, "Error del asistente. No pude verificar la respuesta con el CRM; no inventaré datos.");
       const answer = response.text?.trim();
-      if (!answer) throw new ChatError(503, "Gemini no pudo completar la respuesta. Inténtalo nuevamente.");
+      if (!answer) throw new ChatError(502, "Error del asistente. Gemini no devolvió una respuesta visible. Inténtalo nuevamente.");
       return { text: answer };
     }
-    const modelContent = response.candidates?.[0]?.content;
-    if (!modelContent?.parts?.length) throw new ChatError(503, "No pude interpretar la respuesta de Gemini. Inténtalo nuevamente.");
-    contents.push(modelContent); // retains SDK thoughtSignature/function-call correlation
     const results: Part[] = [];
+    let pending: PacChatReply | undefined;
     for (const call of calls) {
       const name = call.name ?? "";
       let result: unknown;
       try {
-        if (WRITE_TOOLS.includes(name)) {
+        if (pending) {
+          result = { estado: "no_ejecutado", mensaje: "Ya hay una propuesta pendiente. Espera la confirmación del usuario." };
+        } else if (WRITE_TOOLS.includes(name)) {
           if (ambiguousIds.has(String(call.args?.cliente_id))) {
             result = { error: "Hay varios contactos que coinciden. Pregunta a Víctor cuál es y espera su respuesta antes de preparar esta escritura." };
           } else if (!didConsult || (name !== "crear_contacto" && !fetchedContacts.has(String(call.args?.cliente_id)))) {
@@ -95,7 +110,8 @@ async function answerWithModel(sb: SupabaseClient, userId: string, input: PacCha
           } else {
             await privacyCheck(run, call.args);
             const p = await prepareProposal(sb, userId, name as WriteTool, call.args);
-            return { text: "Revisa lo que voy a guardar. No modificaré la base hasta que pulses Confirmar.", proposal: p.public };
+            pending = { text: "Revisa lo que voy a guardar. No modificaré la base hasta que pulses Confirmar.", proposal: p.public };
+            result = { estado: "pendiente_confirmacion", propuesta: p.public, base_modificada: false };
           }
         } else {
           result = await readTool(sb, name, call.args);
@@ -121,6 +137,7 @@ async function answerWithModel(sb: SupabaseClient, userId: string, input: PacCha
       results.push({ functionResponse: { id: call.id, name, response: { resultado: trimResult(result) } } });
     }
     contents.push({ role: "user", parts: results });
+    if (pending) return pending;
   }
-  throw new ChatError(503, "La consulta necesitó demasiados pasos. Prueba con un contacto o una pregunta más específica.");
+  throw new ChatError(502, "Error del asistente. La consulta necesitó demasiados pasos; prueba con una pregunta más específica.");
 }

@@ -35,6 +35,27 @@ export interface PacChatInput {
   confirmationId?: string;
   /** Per-message idempotency key, reused when retrying the same request */
   requestId?: string;
+  /**
+     * Opaque conversation identifier, scoped to the authenticated user
+     * @maxLength 100
+     */
+  conversationId?: string;
+}
+
+export type PacChatProgressState = typeof PacChatProgressState[keyof typeof PacChatProgressState];
+
+
+export const PacChatProgressState = {
+  thinking: 'thinking',
+  retrying: 'retrying',
+  fallback: 'fallback',
+  done: 'done',
+  error: 'error',
+} as const;
+
+export interface PacChatProgress {
+  state: PacChatProgressState;
+  message?: string;
 }
 
 export interface PacChatField {

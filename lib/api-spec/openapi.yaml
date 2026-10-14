@@ -11,6 +11,26 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /chat/status/{requestId}:
+    get:
+      operationId: pacChatProgress
+      summary: Authenticated progress of one assistant request
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: requestId
+          required: true
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        "200":
+          description: Request progress without model identifiers or tool data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PacChatProgress"
   /chat:
     post:
       operationId: pacChat
@@ -83,6 +103,19 @@ components:
         requestId:
           type: string
           description: Per-message idempotency key, reused when retrying the same request
+        conversationId:
+          type: string
+          maxLength: 100
+          description: Opaque conversation identifier, scoped to the authenticated user
+    PacChatProgress:
+      type: object
+      required: [state]
+      properties:
+        state:
+          type: string
+          enum: [thinking, retrying, fallback, done, error]
+        message:
+          type: string
     PacChatProposal:
       type: object
       required: [id, tool, title, fields, expiresAt]

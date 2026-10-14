@@ -8,7 +8,8 @@ import { parseWrite, timestamp } from "../src/chat/contracts";
 import { readTool, nextDate } from "../src/chat/data";
 import { privacyCheck, chatAnswer } from "../src/chat/agent";
 import { sessionClient } from "../src/chat/session";
-import { modelPair, ModelRun, UseFallback, unavailable } from "../src/chat/models";
+import { modelPair, ModelRun, UseFallback, unavailable, providerDetails, providerError } from "../src/chat/models";
+import { conversation, appendUserText } from "../src/chat/history";
 
 function database() {
   const contact: Record<string, unknown> = {
@@ -62,6 +63,7 @@ function database() {
   return { sb, contact, contacts, meetings, operations, fail(value: boolean) { failUpdate = value; } };
 }
 const uid = () => randomUUID();
+const textResponse = (text: string) => ({ text, functionCalls: [], candidates: [{ content: { role: "model", parts: [{ text, thoughtSignature: "final-text-signature" }] } }] });
 const meeting = { cliente_id: "c1", fecha_reunion: "2026-10-14T10:00:00-05:00", etapa: "Demo agendada", temperatura: "Frío", transcripcion_resumen: "Demo acordada", acuerdos_proximo_paso: "Enviar ficha", borrador_whatsapp: "Confirmo la demo acordada.", proximo_contacto_fecha: "2026-10-16", proximo_contacto_motivo: "Confirmar equipo" };
 
 test("anonymous chat is 401 without inspecting Gemini or querying data", async () => {
@@ -172,7 +174,7 @@ test("ambiguous search blocks a model-selected contact until the user clarifies"
   const fake = { models: { generateContent: async () => {
     const call = calls[idx++];
     return call ? { functionCalls: [call], candidates: [{ content: { role: "model", parts: [{ functionCall: call }] } }] }
-      : { text: "Hay dos contactos. ¿Con qué consultorio desea registrar la reunión?", functionCalls: [] };
+      : textResponse("Hay dos contactos. ¿Con qué consultorio desea registrar la reunión?");
   } } } as unknown as GoogleGenAI;
   const reply = await chatAnswer(db.sb, uid(), { action: "message", history: [{ role: "user", text: "Registrar reunión con Doctora Prueba" }] }, fake);
   assert.equal(reply.proposal, undefined);
@@ -200,7 +202,7 @@ test("availability retry succeeds on the principal without switching", async () 
   assert.deepEqual(models, ["primary", "primary"]);
 });
 
-test("only one primary retry is permitted across generation and privacy calls", async () => {
+test("two bounded primary retries are permitted across generation and privacy calls", async () => {
   let calls = 0;
   const fake = { models: { generateContent: async () => {
     if (++calls === 2) return { text: "OK" };
@@ -209,11 +211,11 @@ test("only one primary retry is permitted across generation and privacy calls", 
   const run = new ModelRun(fake, "primary", true, async () => {});
   await run.generate({ contents: "Consulta" });
   await assert.rejects(run.generate({ contents: "Privacidad" }), UseFallback);
-  assert.equal(calls, 3);
+  assert.equal(calls, 4);
 });
 
-test("invalid requests, permissions and quota do not trigger retries or model substitution", async () => {
-  for (const status of [400, 401, 403, 429]) {
+test("invalid requests and permissions do not trigger retries or model substitution", async () => {
+  for (const status of [400, 401, 403]) {
     let calls = 0;
     const fake = { models: { generateContent: async () => {
       calls++; throw Object.assign(new Error("quota or invalid request"), { status });
@@ -233,27 +235,27 @@ test("fallback restarts tool history without primary thought signatures and with
   const fake = { models: { generateContent: async (p: { model: string; contents: unknown[] }) => {
     const index = requests.length;
     requests.push({ model: p.model, contents: JSON.parse(JSON.stringify(p.contents)) });
-    if (index === 1 || index === 2) throw Object.assign(new Error("high demand"), { status: 503 });
-    if (index === 0 || index === 3) return { functionCalls: [call], candidates: [{ content: { role: "model", parts: [{ functionCall: call, thoughtSignature: index === 0 ? "primary-signature" : "backup-signature" }] } }] };
-    return { text: "Contacto de prueba consultado.", functionCalls: [] };
+    if (index >= 1 && index <= 3) throw Object.assign(new Error("high demand"), { status: 503 });
+    if (index === 0 || index === 4) return { functionCalls: [call], candidates: [{ content: { role: "model", parts: [{ functionCall: call, thoughtSignature: index === 0 ? "primary-signature" : "backup-signature" }] } }] };
+    return textResponse("Contacto de prueba consultado.");
   } } } as unknown as GoogleGenAI;
   const reply = await chatAnswer(db.sb, uid(), { action: "message", history: [{ role: "user", text: "Consultar Doctora Prueba" }] }, fake);
   assert.match(reply.notice ?? "", /respaldo/);
-  assert.equal(requests.length, 5);
+  assert.equal(requests.length, 6);
   assert.ok(requests[0].model === requests[1].model && requests[1].model === requests[2].model);
-  assert.ok(requests[3].model !== requests[0].model && requests[3].model === requests[4].model);
-  assert.equal(requests[3].contents.length, 1);
-  assert.equal(JSON.stringify(requests[3].contents).includes("primary-signature"), false);
+  assert.ok(requests[4].model !== requests[0].model && requests[4].model === requests[5].model);
+  assert.equal(requests[4].contents.length, 1);
+  assert.equal(JSON.stringify(requests[4].contents).includes("primary-signature"), false);
   assert.equal(db.operations.length, 0);
 });
 
-test("failure of both models is bounded at two primary attempts and one fallback attempt", async () => {
+test("an unavailable model goes straight to the distinct fallback without looping", async () => {
   let calls = 0;
   const fake = { models: { generateContent: async () => {
     calls++; throw Object.assign(new Error("model not found"), { status: 404 });
   } } } as unknown as GoogleGenAI;
   await assert.rejects(chatAnswer(database().sb, uid(), { action: "message", history: [{ role: "user", text: "Consultar" }] }, fake), (error: unknown) => (error as { code?: string }).code === "model_unavailable");
-  assert.equal(calls, 3);
+  assert.equal(calls, 2);
 });
 
 test("failover during privacy produces one pending meeting, not an automatic write", async () => {
@@ -267,10 +269,10 @@ test("failover during privacy produces one pending meeting, not an automatic wri
   const fake = { models: { generateContent: async (p: { config?: { responseMimeType?: string } }) => {
     const index = step++;
     if (p.config?.responseMimeType === "application/json") {
-      if (index === 3 || index === 4) throw Object.assign(new Error("high demand"), { status: 503 });
+      if (index >= 3 && index <= 5) throw Object.assign(new Error("high demand"), { status: 503 });
       return { text: '{"permitido":true}' };
     }
-    const call = calls[index < 3 ? index : index - 5];
+    const call = calls[index < 3 ? index : index - 6];
     return { functionCalls: [call], candidates: [{ content: { role: "model", parts: [{ functionCall: call }] } }] };
   } } } as unknown as GoogleGenAI;
   const user = uid();
@@ -281,4 +283,88 @@ test("failover during privacy produces one pending meeting, not an automatic wri
   await executeProposal(db.sb, reply.proposal!.id, user);
   await executeProposal(db.sb, reply.proposal!.id, user);
   assert.equal(db.meetings.length, 1);
+});
+
+test("HTTP 429 and 503 wait exactly 1s and 3s before requesting fallback", async () => {
+  for (const status of [429, 503]) {
+    const delays: number[] = [], states: string[] = [];
+    let attempts = 0;
+    const fake = { models: { generateContent: async () => {
+      attempts++; throw Object.assign(new Error("busy"), { status });
+    } } } as unknown as GoogleGenAI;
+    const run = new ModelRun(fake, "primary", true, async (ms) => { delays.push(ms); }, (s) => states.push(s));
+    await assert.rejects(run.generate({ contents: "consulta" }), UseFallback);
+    assert.deepEqual(delays, [1000, 3000]);
+    assert.deepEqual(states, ["retrying", "retrying", "fallback"]);
+    assert.equal(attempts, 3);
+    assert.match(providerError({ status }).message, /Mucha demanda/);
+  }
+  assert.match(providerError({ status: 400 }).message, /Error del asistente/);
+});
+
+test("real provider code/message are extracted with secrets and bearer credentials redacted", () => {
+  const fakeKey = "AIza_FAKE_TEST_ONLY";
+  const details = providerDetails({ status: 400, message: JSON.stringify({ error: { code: 400, message: `Missing thought_signature. key=${fakeKey} Bearer fake-jwt` } }) }, [fakeKey]);
+  assert.equal(details.httpStatus, 400);
+  assert.match(details.providerMessage, /Missing thought_signature/);
+  assert.equal(details.providerMessage.includes(fakeKey), false);
+  assert.equal(details.providerMessage.includes("fake-jwt"), false);
+  assert.deepEqual(providerDetails({ message: '{"error":{"code":429,"message":"Quota exceeded"}}' }, []), { httpStatus: 429, providerMessage: "Quota exceeded" });
+});
+
+test("server SDK history is isolated by authenticated user, even for the same conversation ID", () => {
+  const id = uid(), first = uid();
+  conversation(first, id).save("primary", "primary", [{ role: "model", parts: [{ text: "privado", thoughtSignature: "opaque" }] }]);
+  assert.equal(conversation(uid(), id).existing, undefined);
+  assert.equal(conversation(first, id).existing?.contents[0].parts?.[0].thoughtSignature, "opaque");
+});
+
+test("a follow-up after a pending write retains its tool response while grouping user parts", () => {
+  const content = [{ role: "user", parts: [{ functionResponse: { id: "pending", name: "registrar_reunion", response: { estado: "pendiente_confirmacion" } } }] }];
+  const original = structuredClone(content[0].parts[0]);
+  appendUserText(content, "Corrige el próximo paso.");
+  assert.equal(content.length, 1);
+  assert.deepEqual(content[0].parts[0], original);
+  assert.equal(content[0].parts.length, 2);
+});
+
+test("four requested turns retain every raw model Part and functionResponse; final meeting asks confirmation", async () => {
+  const db = database(), user = uid(), id = uid();
+  Object.assign(db.contact, { nombre: "Clínica Andina", institucion: "Clínica Andina" });
+  const questions = ["¿A quién llamo hoy?", "¿Qué se habló con la Clínica Andina?", "¿y su próximo paso?", "registra que hoy lo llamé y quedó en decidir el lunes"];
+  const rawModels: Array<Record<string, unknown>> = [];
+  let turn = 0, phase = 0;
+  const fake = { models: { generateContent: async (p: { contents: Array<{ role: string; parts: Array<Record<string, unknown>> }>; config: { responseMimeType?: string } }) => {
+    if (p.config.responseMimeType) return { text: '{"permitido":true}' };
+    // Every previously received model content must appear unmodified, including
+    // signatures on text/thought Parts, not only functionCall Parts.
+    for (const raw of rawModels) assert.ok(p.contents.some((content) => JSON.stringify(content) === JSON.stringify(raw)));
+    let call: Record<string, unknown> | undefined;
+    if (phase++ === 0) call = turn === 0 ? { id: `read-${turn}`, name: "seguimientos", args: { desde: "2026-10-14", hasta: "2026-10-14" } }
+      : { id: `read-${turn}`, name: "ver_contacto", args: { cliente_id: "c1" } };
+    else if (turn === 3) call = { id: "write-3", name: "registrar_reunion", args: { ...meeting, etapa: "Esperando decisión", temperatura: "Tibio", transcripcion_resumen: "Se llamó hoy; decisión el lunes.", proximo_contacto_fecha: "2026-10-19", proximo_contacto_motivo: "Retomar la decisión" } };
+    const content = { role: "model", parts: [
+      { thought: true, text: "Razonamiento sintético", thoughtSignature: `thought-${turn}-${phase}` },
+      call ? { functionCall: call, thoughtSignature: `call-${turn}-${phase}` } : { text: "Clínica Andina: enviar ficha y retomar la decisión.", thoughtSignature: `text-${turn}-${phase}` },
+    ] };
+    rawModels.push(structuredClone(content));
+    return { text: call ? "" : "Clínica Andina: enviar ficha y retomar la decisión.", functionCalls: call ? [call] : [], candidates: [{ content }] };
+  } } } as unknown as GoogleGenAI;
+  const history: Array<{ role: "user" | "assistant"; text: string }> = [];
+  for (turn = 0; turn < questions.length; turn++) {
+    phase = 0;
+    history.push({ role: "user", text: questions[turn] });
+    const reply = await chatAnswer(db.sb, user, { action: "message", conversationId: id, history }, fake);
+    if (turn < 3) { assert.match(reply.text, /Clínica Andina/); assert.equal(reply.proposal, undefined); }
+    else { assert.equal(reply.proposal?.tool, "registrar_reunion"); assert.match(reply.text, /Confirmar/); assert.ok(reply.proposal?.fields.some((f) => f.value === "Esperando decisión")); }
+    history.push({ role: "assistant", text: reply.text });
+    const stored = conversation(user, id).existing!.contents;
+    for (const raw of rawModels) assert.ok(stored.some((content) => JSON.stringify(content) === JSON.stringify(raw)));
+    for (const raw of rawModels) for (const part of raw.parts as Array<{ functionCall?: { id: string } }>) {
+      if (part.functionCall) assert.ok(stored.some((content) => content.parts?.some((p) => p.functionResponse?.id === part.functionCall!.id)));
+    }
+  }
+  assert.equal(db.operations.length, 0);
+  // The prepared write also has a functionResponse; next turn is not a dangling call.
+  assert.ok(conversation(user, id).existing!.contents.some((c) => c.parts?.some((p) => p.functionResponse?.id === "write-3")));
 });

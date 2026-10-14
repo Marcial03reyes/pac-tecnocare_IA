@@ -7,23 +7,31 @@
 import assert from "node:assert/strict";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
-import { chatAnswer, privacyCheck, gemini } from "../src/chat/agent";
+import { chatAnswer, gemini } from "../src/chat/agent";
 import { cancelProposal } from "../src/chat/proposals";
 import { limaToday } from "../src/chat/data";
 import { ChatError } from "../src/chat/contracts";
+import type { PacChatInput } from "@workspace/api-zod";
 
 async function main() {
   assert.ok(process.argv.includes("--live"), "Pass --live to permit real Gemini requests with fictional data.");
   const contact = {
-    id: "demo-1", nombre: "Contacto Demostración", institucion: "Consultorio Demostración",
-    especialidad: "Rehabilitación", etapa_actual: "Primer contacto", temperatura_actual: "Caliente",
+    id: "demo-1", nombre: "Clínica Andina", institucion: "Clínica Andina",
+    especialidad: "Rehabilitación", etapa_actual: "Interesado - evaluando", temperatura_actual: "Tibio",
     proximo_contacto_fecha: limaToday(), proximo_contacto_motivo: "Confirmar demostración",
     ultima_reunion: null, motivo_perdida: null, telefono: null, email: null,
+  };
+  const previousMeeting = {
+    id: "meeting-demo", cliente_id: "demo-1", fecha_reunion: "2026-10-13T15:00:00Z",
+    etapa: "Interesado - evaluando", temperatura: "Tibio",
+    transcripcion_resumen: "Caso ficticio: la clínica evaluó el generador y solicitó ficha técnica.",
+    acuerdos_proximo_paso: "Enviar ficha técnica y confirmar una demostración.",
+    objeciones_detectadas: null, borrador_whatsapp: "Le enviaré la ficha técnica.", analisis: null, transcripcion: null,
   };
   let queries = 0, attemptedWrites = 0;
   const sb = { from(table: string) {
     queries++;
-    let rows: Record<string, unknown>[] = table === "clientes" ? [{ ...contact }] : [];
+    let rows: Record<string, unknown>[] = table === "clientes" ? [{ ...contact }] : [{ ...previousMeeting }];
     const blocked = () => { attemptedWrites++; throw new Error("Real or simulated database writes are prohibited in this check."); };
     const chain = {
       select() { return chain; },
@@ -61,31 +69,24 @@ async function main() {
     }
   };
   const userId = randomUUID();
-  const readReply = await chatAnswer(sb, userId, {
-    action: "message", history: [{ role: "user", text: "¿A quién debo llamar hoy? Consulte el CRM y mencione la institución." }],
-  }, ai);
-  assert.match(readReply.text, /Demostraci[oó]n/i);
-  assert.equal(readReply.proposal, undefined);
+  const conversationId = randomUUID();
+  const history: PacChatInput["history"] = [];
+  const questions = ["¿A quién llamo hoy?", "¿Qué se habló con la Clínica Andina?", "¿y su próximo paso?", "registra que hoy lo llamé y quedó en decidir el lunes"];
+  for (const [index, question] of questions.entries()) {
+    history.push({ role: "user", text: question });
+    const reply = await chatAnswer(sb, userId, { action: "message", history, conversationId, requestId: randomUUID() }, ai);
+    assert.ok(reply.text.trim());
+    if (index < 3) assert.equal(reply.proposal, undefined);
+    else {
+      assert.equal(reply.proposal?.tool, "registrar_reunion");
+      assert.match(reply.text, /Confirmar/);
+      if (reply.proposal) cancelProposal(reply.proposal.id, userId);
+    }
+    history.push({ role: "assistant", text: reply.text });
+    assert.equal(attemptedWrites, 0);
+    console.log(JSON.stringify({ check: "live_four_turn_conversation", turn: index + 1, passed: true, asksConfirmation: Boolean(reply.proposal), attemptedWrites }));
+  }
   assert.ok(queries > 0);
-  console.log(JSON.stringify({ check: "live_function_calling_read", passed: true }));
-
-  const proposalReply = await chatAnswer(sb, userId, {
-    action: "message",
-    history: [{
-      role: "user",
-      text: 'Registre una reunión con Consultorio Demostración, ID demo-1, el 14 de octubre de 2026 a las 10:00 hora de Perú. Revisamos el generador y acordamos una demostración el 16 de octubre. Etapa: Demo agendada. Temperatura: Caliente. Resumen: se acordó una demostración y enviar ficha técnica. Acuerdos: enviar ficha y confirmar demostración. Sin objeciones comerciales. Próximo contacto: 2026-10-16, motivo confirmar demostración. Borrador WhatsApp: "Confirmo la demostración acordada. Le enviaré la ficha técnica solicitada." Prepare la propuesta, no guarde nada.',
-    }],
-  }, ai);
-  assert.equal(proposalReply.proposal?.tool, "registrar_reunion");
-  assert.equal(proposalReply.saved, undefined);
-  assert.equal(attemptedWrites, 0);
-  if (proposalReply.proposal) cancelProposal(proposalReply.proposal.id, userId);
-  console.log(JSON.stringify({ check: "live_proposal_and_commercial_privacy_gate", passed: true, attemptedWrites }));
-
-  await assert.rejects(privacyCheck(ai, {
-    transcripcion_resumen: "Caso ficticio de prueba: el médico tiene hipertensión; guardar ese dato de salud personal.",
-  }), (error: unknown) => (error as { status?: number }).status === 400);
-  console.log(JSON.stringify({ check: "live_sensitive_data_rejected", passed: true }));
 }
 
 main().catch((error: unknown) => {

@@ -22,6 +22,7 @@ import type {
 import type {
   HealthStatus,
   PacChatInput,
+  PacChatProgress,
   PacChatReply
 } from './api.schemas';
 
@@ -51,6 +52,83 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getPacChatProgressUrl = (requestId: string,) => {
+
+
+
+
+  return `/api/chat/status/${requestId}`
+}
+
+/**
+ * @summary Authenticated progress of one assistant request
+ */
+export const pacChatProgress = async (requestId: string, options?: Parameters<typeof customFetch>[1]): Promise<PacChatProgress> => {
+
+  return customFetch<PacChatProgress>(getPacChatProgressUrl(requestId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getPacChatProgressQueryKey = (requestId: string,) => {
+    return [
+    `/api/chat/status/${requestId}`
+    ] as const;
+    }
+
+
+export const getPacChatProgressQueryOptions = <TData = Awaited<ReturnType<typeof pacChatProgress>>, TError = ErrorType<unknown>>(requestId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof pacChatProgress>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPacChatProgressQueryKey(requestId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof pacChatProgress>>> = ({ signal }) => pacChatProgress(requestId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: requestId !== null && requestId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof pacChatProgress>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type PacChatProgressQueryResult = NonNullable<Awaited<ReturnType<typeof pacChatProgress>>>
+export type PacChatProgressQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Authenticated progress of one assistant request
+ */
+
+export function usePacChatProgress<TData = Awaited<ReturnType<typeof pacChatProgress>>, TError = ErrorType<unknown>>(
+ requestId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof pacChatProgress>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getPacChatProgressQueryOptions(requestId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getPacChatUrl = () => {
 

@@ -12,5 +12,7 @@ export * from './pacChatInput';
 export * from './pacChatInputAction';
 export * from './pacChatMessage';
 export * from './pacChatMessageRole';
+export * from './pacChatProgress';
+export * from './pacChatProgressState';
 export * from './pacChatProposal';
 export * from './pacChatReply';
