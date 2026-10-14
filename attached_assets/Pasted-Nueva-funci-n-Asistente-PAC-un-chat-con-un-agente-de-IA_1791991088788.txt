@@ -1,0 +1,42 @@
+Nueva función: "Asistente PAC", un chat con un agente de IA para Víctor. Mantén todo lo que funciona. No crees ni modifiques tablas.
+
+ARQUITECTURA (importante):
+- Agrega un backend (Express o similar) en este mismo proyecto con un endpoint POST /api/chat.
+- La clave está en el Secret GEMINI_API_KEY: úsala SOLO en el servidor, nunca en el frontend.
+- Modelo: Gemini (gemini-2.5-flash) con function calling, usando el SDK oficial @google/genai.
+- El frontend envía el historial del chat y el access_token de la sesión de Supabase de Víctor. El servidor crea un cliente Supabase con VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY y el header Authorization: Bearer <access_token>, para que se respeten los permisos. NUNCA uses una service_role key. Si no hay sesión válida, responde 401.
+
+HERRAMIENTAS del agente (funciones que ejecuta el servidor contra Supabase):
+1. buscar_contactos(texto): busca en public.clientes por nombre o institución (ilike). Devuelve id, nombre, institucion, etapa_actual, temperatura_actual, proximo_contacto_fecha.
+2. ver_contacto(cliente_id): datos del cliente + sus reuniones (fecha_reunion, etapa, temperatura, transcripcion_resumen, objeciones_detectadas, acuerdos_proximo_paso, borrador_whatsapp, analisis, transcripcion), de la más reciente a la más antigua.
+3. seguimientos(desde, hasta): clientes con proximo_contacto_fecha en ese rango.
+4. crear_contacto(nombre, institucion, especialidad, telefono, email, origen).
+5. actualizar_contacto(cliente_id, campos): solo etapa_actual, temperatura_actual, proximo_contacto_fecha, proximo_contacto_motivo, telefono, email, institucion, especialidad, motivo_perdida.
+6. registrar_reunion(cliente_id, fecha_reunion, etapa, temperatura, transcripcion_resumen, objeciones_detectadas, acuerdos_proximo_paso, borrador_whatsapp, proximo_contacto_fecha, proximo_contacto_motivo): inserta en public.reuniones con origen_audio = 'Chat PAC' y actualiza en clientes ultima_reunion, etapa_actual, temperatura_actual y el próximo contacto.
+
+REGLAS DE ESCRITURA:
+- Las herramientas 4, 5 y 6 NO se ejecutan directo: el agente primero muestra un resumen de lo que va a guardar y el frontend muestra botones "Confirmar" y "Corregir". Solo al confirmar se ejecuta.
+- No existe herramienta para borrar.
+- Si hay varios contactos que coinciden, el agente pregunta cuál es.
+- Si el contacto no existe, ofrece crearlo antes de registrar la reunión.
+
+INSTRUCCIONES DEL SISTEMA para el agente (en español):
+"Eres el Asistente PAC de TECNOCARE, asistente comercial de Víctor, que vende generadores de ozono médico europeos en Perú a médicos de rehabilitación, terapia física, terapia del dolor y traumatología. Respondes breve, claro y en español, con trato cercano. Nunca inventas datos: si no está en la base, lo dices. Usa las herramientas para consultar antes de responder.
+Cuando Víctor te cuente una reunión o llamada que no se grabó, extrae: resumen, objeciones, acuerdos/próximo paso, etapa, temperatura, próximo contacto y un borrador de WhatsApp, y pide confirmación antes de guardar.
+ETAPAS (usa exactamente una): Primer contacto, Interesado - evaluando, Información pendiente, Demo agendada, Demo realizada, Negociación, Esperando decisión, Ganado, Perdido, En pausa.
+- Información pendiente: el avance depende de algo que Víctor debe enviar.
+- Demo agendada: se acordó demo y al menos el día.
+- Negociación: se discuten precio, pago o condiciones.
+- Ganado/Perdido: solo con decisión explícita.
+TEMPERATURA (sin tilde): Caliente = habla de cómo o cuándo comprar y no hay objeción bloqueante; Tibio = interés real sin decisión u objeciones abiertas; Frio = no ve necesidad, sin presupuesto, pospone sin fecha.
+BORRADOR DE WHATSAPP: trato de usted, máximo 5 líneas, sin 'buenos días/tardes/noches', solo confirma lo acordado; prohibido inventar precios, garantías o promesas.
+PRIVACIDAD (Ley 29733): no registres salud del médico o su familia, religión, política, vida sexual, origen étnico, afiliación sindical, ingresos personales, deudas ni problemas familiares. Sí se registra la capacidad de compra del consultorio si es parte de la negociación.
+Si te piden la transcripción y el campo transcripcion está vacío, explica que por privacidad solo se guarda el resumen y muestra resumen, objeciones, acuerdos y análisis."
+
+INTERFAZ:
+- En el sidebar, reemplaza "Notas de voz" por "Asistente PAC" (ícono de chat). Las reuniones siguen visibles en el detalle de cada contacto.
+- Pantalla de chat estilo Claude: burbujas, campo de texto abajo, botón enviar, indicador "pensando…", tarjetas de confirmación con Confirmar/Corregir, y enlace "Ver contacto →" cuando se crea o actualiza uno.
+- Sugerencias al iniciar: "¿A quién debo llamar hoy?", "Registrar una reunión", "¿Qué se habló con…?", "¿Qué clientes están calientes?".
+- El botón naranja "Nota de voz" de arriba ahora abre el Asistente PAC.
+- Botón de micrófono en el chat que dicta por voz (Web Speech API, es-PE) y escribe el texto en el campo.
+- Muestra errores de forma amigable.
