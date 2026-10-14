@@ -1,0 +1,21 @@
+Rediseña la vista Embudo para que sea limpia y escale con cientos de contactos. No cambies la base de datos.
+
+1. FLUJO VISUAL: arriba de las 3 columnas, un encabezado tipo "pasos" con flechas que avanzan a la derecha: LEAD → NEGOCIACIÓN → GANADO (estilo chevron/flecha elegante, colores suaves: gris, azul, verde), con el total de cada una.
+
+2. TARJETAS MÍNIMAS: solo nombre, institución (una línea, cortada con …) y un punto de color por temperatura (Caliente naranja, Tibio azul, Frio gris). Nada más. Clic en la tarjeta abre el detalle del contacto.
+
+3. COLUMNA NEGOCIACIÓN AGRUPADA: dentro de la columna, grupos plegables por etapa detallada en este orden: Primer contacto, Interesado - evaluando, Información pendiente, Demo agendada, Demo realizada, Negociación, Esperando decisión, En pausa. Cada grupo es una fila con el nombre, el contador y una flecha ▸ para desplegar (ej. "Demo agendada (3) ▸"). Por defecto todos plegados excepto los que tengan contactos Caliente. Oculta los grupos vacíos.
+
+4. LÍMITE POR COLUMNA: cada columna (y cada grupo) muestra máximo 5 tarjetas y un botón "Ver N más". Las columnas tienen altura fija con scroll interno; la página no se alarga.
+
+5. GANADO: muestra los ganados de los últimos 90 días; botón "Ver todos los clientes" lleva a Contactos → Clientes.
+
+6. ARRASTRAR es la única forma de mover entre columnas. Elimina los botones o menús de "mover a…" y los textos de ayuda.
+   - Lead → Negociación: etapa 'Interesado - evaluando' y pide elegir temperatura (mini selector de 3 puntos de color).
+   - Negociación → Ganado: confirmación corta "¿Venta ganada?".
+   - Soltar en otro grupo dentro de Negociación cambia la etapa detallada a ese grupo.
+
+7. PERDIDO: en cada tarjeta, al pasar el mouse, aparece un ícono pequeño ✕ en la esquina. Al pulsarlo pide el motivo en un mini cuadro y marca Perdido (o Descartado si era Lead). Abajo de todo, enlace discreto "Ver cerrados (N)".
+
+8. Buscador pequeño arriba a la derecha que filtra las tarjetas de las 3 columnas.
+En celular: las 3 columnas en pestañas con la flecha de flujo arriba.

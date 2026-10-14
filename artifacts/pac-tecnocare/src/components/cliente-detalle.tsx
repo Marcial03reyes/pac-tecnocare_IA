@@ -36,7 +36,7 @@ export function ClienteDetalle({ cliente, onClose }: { cliente: Cliente | null; 
   };
   return (
     <Sheet open={!!cliente} onOpenChange={(o) => !o && !mutation.isPending && close()}>
-      <SheetContent className="w-full overflow-y-auto bg-[#F4F6FB] sm:max-w-lg">
+      <SheetContent className="w-full max-w-full overflow-x-hidden overflow-y-auto bg-[#F4F6FB] sm:max-w-lg" style={{ animation: "none", transform: "none" }}>
         {cliente && (
           <>
             <SheetHeader className="text-left">

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { STAGES } from "../src/lib/contact-stages";
-import { compareNegotiation, funnelColumn, funnelLoss, funnelMove, groupFunnel } from "../src/lib/funnel";
+import { compareNegotiation, funnelColumn, funnelLoss, funnelMove, groupFunnel, filterFunnel, groupNegotiation, recentWon } from "../src/lib/funnel";
 import { contactPatch } from "../src/lib/crm-writes";
 import type { Cliente } from "../src/lib/types";
 
@@ -81,5 +81,56 @@ test("closing always requires reason, lead becomes discarded and active becomes 
   assert.throws(() => funnelLoss(c("Demo agendada"), ""), /motivo/);
   assert.deepEqual(funnelLoss(c("Lead"), " No responde "), { etapa_actual: "Descartado", motivo_perdida: "No responde" });
   assert.deepEqual(funnelLoss(c("En pausa"), "Sin presupuesto"), { etapa_actual: "Perdido", motivo_perdida: "Sin presupuesto" });
-  assert.throws(() => funnelLoss(c("Ganado"), "Cerrado"), /Solo/);
+  assert.deepEqual(funnelLoss(c("Ganado"), "Venta anulada"), { etapa_actual: "Perdido", motivo_perdida: "Venta anulada" });
+  assert.throws(() => funnelLoss(c("Perdido"), "Cerrado"), /cerrado/);
+});
+
+test("dropping within negotiation explicitly changes granular stage, not on a plain column drop", () => {
+  const original = c("Demo agendada");
+  const change = funnelMove(original, "negotiation", "Demo realizada");
+  assert.equal(change.kind, "move");
+  if (change.kind === "move") {
+    assert.deepEqual(change.patch, { etapa_actual: "Demo realizada" });
+    assert.equal(change.needsConfirmation, false);
+  }
+  assert.deepEqual(funnelMove(original, "negotiation"), { kind: "noop" });
+  assert.deepEqual(funnelMove(original, "negotiation", "Demo agendada"), { kind: "noop" });
+  assert.equal(funnelMove(original, "negotiation", "other").kind, "blocked");
+  const lead = funnelMove(c("Lead"), "negotiation", "Demo realizada");
+  if (lead.kind !== "move") assert.fail("Lead should move");
+  assert.equal(lead.patch.etapa_actual, "Interesado - evaluando");
+  assert.equal(lead.needsTemperature, true);
+  assert.equal(funnelMove(c("Ganado"), "negotiation", "Demo realizada").kind, "move");
+});
+
+test("negotiation groups are canonical order, hide empty and retain unknown and blank-meeting contacts", () => {
+  const rows = [c("En pausa"), c("Etapa futura"), c("Demo realizada"), c(null, { tiene_reuniones: true }), c("Primer contacto")];
+  const before = structuredClone(rows);
+  const groups = groupNegotiation(rows);
+  assert.deepEqual(groups.map((g) => g.key), ["Primer contacto", "Demo realizada", "En pausa", "other"]);
+  assert.equal(groups.at(-1)?.contacts.length, 2);
+  assert.deepEqual(rows, before);
+});
+
+test("search is accent insensitive, name/institution only, and does not mutate data", () => {
+  const rows = [c("Lead", { nombre: "Ángela", institucion: "Clínica Andina" }), c("Ganado", { nombre: "Luis" })];
+  assert.equal(filterFunnel(rows, " clinica ANDINA ").length, 1);
+  assert.equal(filterFunnel(rows, "angela").length, 1);
+  assert.equal(filterFunnel(rows, "Ganado").length, 0);
+  assert.equal(filterFunnel(rows, "").length, 2);
+});
+
+test("recent won uses inclusive Lima calendar cutoff, ignores missing invalid future dates and other stages", () => {
+  const rows = [
+    c("Ganado", { id: "today", fecha_cierre: "2026-10-14" }),
+    c("Ganado", { id: "boundary", fecha_cierre: "2026-07-16" }),
+    c("Ganado", { id: "old", fecha_cierre: "2026-07-15" }),
+    c("Ganado", { id: "future", fecha_cierre: "2026-10-15" }),
+    c("Ganado", { id: "missing", fecha_cierre: null }),
+    c("Ganado", { id: "invalid", fecha_cierre: "2026-09-31" }),
+    c("Ganado", { id: "bad", fecha_cierre: "bad" }),
+    c("Lead", { id: "notwon", fecha_cierre: "2026-10-14" }),
+    c("Ganado", { id: "tz", fecha_cierre: "2026-10-15T02:00:00Z" }),
+  ];
+  assert.deepEqual(new Set(recentWon(rows, new Date("2026-10-15T03:00:00Z")).map((r) => r.id)), new Set(["today", "boundary", "tz"]));
 });

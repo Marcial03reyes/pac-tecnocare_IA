@@ -13,4 +13,10 @@ The Embudo's Lead / Negociación / Ganado columns are presentation groups, not a
 
 **Why:** The user explicitly requested three columns while keeping the database and the copilot's detailed stages unchanged. The column name Negociación also exists as a detailed stage, so confusing the two would overwrite analysis.
 
-**How to apply:** Never migrate records to three stages or overwrite detailed stages merely by grouping/reordering them. Only explicit user transitions write canonical stages: Lead to Negociación uses Interesado - evaluando with a chosen temperature; winning and reopening won contacts require confirmation, and closing a lead/opportunity requires a reason.
+**How to apply:** Never migrate records to three stages or overwrite detailed stages merely by grouping/reordering them. Explicitly dropping an opportunity onto a canonical detailed-stage group updates that stage; dropping on the plain Negociación column does not. Lead to Negociación always uses Interesado - evaluando with a chosen temperature, even when dropped onto another group. Winning and reopening won contacts require confirmation, and closing a contact requires a reason.
+
+Ganado in the Embudo is a recent-sales view (last 90 days), not the complete client list. Use the actual closing date; missing closing dates must not be inferred from unrelated timestamps. Keep all won contacts accessible through Contactos → Clientes.
+
+**Why:** The user requested a compact board that scales to hundreds of contacts without changing the database or losing access to older clients.
+
+**How to apply:** Keep presentation filtering separate from stage ownership. Unknown active stages remain in Negociación in a separate group without silently converting their stored stage.

@@ -1,0 +1,41 @@
+.embudo-card__dismiss {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.embudo-card {
+  touch-action: none;
+}
+
+.embudo-flow-step {
+  margin-left: -9px;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%, 12px 50%);
+}
+
+.embudo-flow-step--first {
+  margin-left: 0;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
+}
+
+.embudo-flow-step--last {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 12px 50%);
+}
+
+.embudo-card:hover .embudo-card__dismiss,
+.embudo-card:focus-within .embudo-card__dismiss {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .embudo-card__dismiss {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.embudo-scroll {
+  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-width: thin;
+}
