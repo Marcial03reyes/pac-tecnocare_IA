@@ -160,6 +160,7 @@ function AssistantBubble({ message, busy, onConfirm, onCorrect }: {
             </Link>
           )}
         </div>
+        {message.notice && <p role="status" className="mt-2 px-1 text-xs text-[#6D7580]">{message.notice}</p>}
         {message.proposal && <ProposalReview message={message} busy={busy} onConfirm={onConfirm} onCorrect={onCorrect} />}
       </div>
     </article>
@@ -168,15 +169,24 @@ function AssistantBubble({ message, busy, onConfirm, onCorrect }: {
 
 export default function AsistentePage() {
   usePageMeta("Asistente PAC — PAC TECNOCARE", "Asistente comercial para revisar contactos, reuniones y seguimientos.");
-  const { messages, busy, error, send, confirm, correct, clearError } = usePacAssistant();
+  const { messages, busy, waitingForModel, error, send, confirm, correct, clearError } = usePacAssistant();
   const [draft, setDraft] = useState("");
   const [listening, setListening] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [interim, setInterim] = useState("");
+  const [slow, setSlow] = useState(false);
+  const awaitingAnswer = waitingForModel;
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const mountedRef = useRef(true);
+
+  useEffect(() => {
+    setSlow(false);
+    if (!awaitingAnswer) return;
+    const timer = window.setTimeout(() => setSlow(true), 8000);
+    return () => window.clearTimeout(timer);
+  }, [awaitingAnswer]);
 
   useEffect(() => {
     const node = scrollRef.current;
@@ -335,11 +345,11 @@ export default function AsistentePage() {
                   onConfirm={() => void handleConfirm(message)} onCorrect={() => void handleCorrect(message)} />
               ))}
               {busy && (
-                <div className="flex items-center gap-3" role="status" aria-label="PAC está pensando">
+                <div className="flex items-center gap-3" role="status" aria-label={waitingForModel ? "PAC está pensando" : "PAC está procesando la acción"}>
                   <div className="grid h-8 w-8 place-items-center rounded-full bg-[#172944] text-[#F7B66C]"><Sparkles className="h-4 w-4" /></div>
                   <div className="flex items-center gap-2 rounded-xl rounded-tl-sm border border-[#EBE9E4] bg-[#FFFEFC] px-4 py-3 text-[13px] text-[#6D7580]">
                     <span className="flex gap-1" aria-hidden="true"><i className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#D78643]" /><i className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#D78643] [animation-delay:150ms]" /><i className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#D78643] [animation-delay:300ms]" /></span>
-                    Pensando…
+                    {slow && waitingForModel ? "Está tardando un poco; reintentaré o usaré el respaldo si el modelo no está disponible." : waitingForModel ? "Pensando…" : "Procesando…"}
                   </div>
                 </div>
               )}

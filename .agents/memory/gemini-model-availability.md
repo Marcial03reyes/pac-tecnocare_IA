@@ -3,7 +3,7 @@ name: Gemini model availability
 description: Model catalog presence does not prove a key can generate content with that model.
 ---
 
-Validate a requested Gemini model with a minimal generation request before claiming it is usable. Do not silently substitute another model.
+Validate a requested Gemini model with a minimal generation request before claiming it is usable. Substitution requires the user's authorization.
 
 **Why:** Google's catalog can list a model and its generation methods while actual generation rejects access for new users. Catalog availability and account eligibility are different.
 
@@ -13,7 +13,13 @@ For Asistente PAC, the user explicitly authorized replacing gemini-2.5-flash wit
 
 **Why:** The requested model rejected generation for new users; the authorized alternative passed real read-tool, proposal and privacy checks using fictional data.
 
-**How to apply:** Keep the authorized model unless the user approves another substitution. Provider failures do not authorize an automatic model change.
+**How to apply:** Keep that model as the default. The user now authorizes configuring the primary through GEMINI_MODEL and automatically using the other available Flash model after one availability/demand retry. This authorization does not extend to arbitrary models or fallback on authentication, permission, or quota failures.
+
+Automatic fallback must restart from human-visible history and must never replay CRM writes.
+
+**Why:** The user requested retry/fallback while preserving the existing confirmation-only write behavior. Model-specific thought signatures cannot be reused safely across models.
+
+**How to apply:** Re-run only reads and privacy checks with the fallback; create a proposal afterward and still require Confirmar. Show a discreet delay/fallback notice rather than silently hiding long waits.
 
 Live probes must use the SDK's native Node module resolution, matching the application's production build.
 

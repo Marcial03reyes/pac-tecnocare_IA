@@ -14,4 +14,6 @@ export interface PacChatReply {
   saved?: boolean;
   partial?: boolean;
   retryable?: boolean;
+  /** Discreet operational notice, without secret values or provider details. */
+  notice?: string;
 }

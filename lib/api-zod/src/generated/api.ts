@@ -42,7 +42,8 @@ export const PacChatResponse = zod.object({
   "contactId": zod.string().optional(),
   "saved": zod.boolean().optional(),
   "partial": zod.boolean().optional(),
-  "retryable": zod.boolean().optional()
+  "retryable": zod.boolean().optional(),
+  "notice": zod.string().optional().describe('Discreet operational notice, without secret values or provider details.')
 })
 
 

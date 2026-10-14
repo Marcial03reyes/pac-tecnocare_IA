@@ -7,9 +7,10 @@ import { useToast } from "./use-toast";
 export interface AssistantMessage {
   id: string; role: "user" | "assistant"; text: string; proposal?: PacChatProposal;
   contactId?: string; saved?: boolean; partial?: boolean; retryable?: boolean;
+  notice?: string;
   proposalStatus?: "pending" | "confirmed" | "corrected" | "expired";
 }
-interface State { messages: AssistantMessage[]; busy: boolean; error: string | null }
+interface State { messages: AssistantMessage[]; busy: boolean; error: string | null; operation?: PacChatInput["action"] }
 const empty = (): State => ({ messages: [], busy: false, error: null });
 function historyOf(messages: AssistantMessage[]): PacChatInput["history"] {
   const history = messages.slice(-40).map((m) => ({
@@ -57,7 +58,7 @@ export function usePacAssistant() {
     const userMessage: AssistantMessage = previous?.role === "user" && previous.text === cleaned
       ? previous : { id: crypto.randomUUID(), role: "user", text: cleaned };
     if (userMessage !== previous) messages.push(userMessage);
-    update((s) => ({ ...s, busy: true, error: null, messages }));
+    update((s) => ({ ...s, busy: true, operation: "message", error: null, messages }));
     try {
       const reply = await request({ action: "message", history: historyOf(messages), requestId: userMessage.id });
       if (!(await stillCurrent())) return false;
@@ -70,13 +71,13 @@ export function usePacAssistant() {
       }));
       return true;
     } catch (error) { if (await stillCurrent()) fail(error); return false; }
-    finally { update((s) => ({ ...s, busy: false })); }
+    finally { update((s) => ({ ...s, busy: false, operation: undefined })); }
   }
   async function confirm(id: string): Promise<void> {
     if (!uid || latest().busy) return;
     const proposed = latest().messages.find((m) => m.proposal?.id === id);
     if (!proposed || proposed.proposalStatus !== "pending" || Date.parse(proposed.proposal!.expiresAt) <= Date.now()) return;
-    update((s) => ({ ...s, busy: true, error: null }));
+    update((s) => ({ ...s, busy: true, operation: "confirm", error: null }));
     try {
       const reply = await request({ action: "confirm", confirmationId: id, history: historyOf(latest().messages) });
       if (!(await stillCurrent())) return;
@@ -93,7 +94,7 @@ export function usePacAssistant() {
       if (reply.saved || reply.partial) await qc.invalidateQueries({ queryKey: ["pac", uid] });
       toast(reply.partial ? { title: "Reunión guardada; actualización pendiente", description: reply.text, variant: "destructive" } : { title: "Confirmación guardada", description: reply.text });
     } catch (error) { if (await stillCurrent()) fail(error, id); }
-    finally { update((s) => ({ ...s, busy: false })); }
+    finally { update((s) => ({ ...s, busy: false, operation: undefined })); }
   }
   async function correct(id: string): Promise<boolean> {
     if (!uid || latest().busy) return false;
@@ -101,7 +102,7 @@ export function usePacAssistant() {
     if (!proposed || proposed.proposalStatus !== "pending") return false;
     // A partially saved meeting cannot be canceled as if nothing had been written.
     if (proposed.partial) { update((s) => ({ ...s, error: "La reunión ya está guardada. Reintenta la actualización o abre el contacto para revisarla." })); return false; }
-    update((s) => ({ ...s, busy: true, error: null }));
+    update((s) => ({ ...s, busy: true, operation: "correct", error: null }));
     try {
       const reply = await request({ action: "correct", confirmationId: id, history: historyOf(latest().messages) });
       if (!(await stillCurrent())) return false;
@@ -110,7 +111,7 @@ export function usePacAssistant() {
       }));
       return true;
     } catch (error) { if (await stillCurrent()) fail(error, id); return false; }
-    finally { update((s) => ({ ...s, busy: false })); }
+    finally { update((s) => ({ ...s, busy: false, operation: undefined })); }
   }
-  return { messages: state.messages, busy: state.busy, error: state.error, send, confirm, correct, clearError: () => update((s) => ({ ...s, error: null })) };
+  return { messages: state.messages, busy: state.busy, waitingForModel: state.busy && state.operation === "message", error: state.error, send, confirm, correct, clearError: () => update((s) => ({ ...s, error: null })) };
 }

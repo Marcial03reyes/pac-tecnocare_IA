@@ -7,7 +7,7 @@
 import assert from "node:assert/strict";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
-import { chatAnswer, privacyCheck, gemini, MODEL } from "../src/chat/agent";
+import { chatAnswer, privacyCheck, gemini } from "../src/chat/agent";
 import { cancelProposal } from "../src/chat/proposals";
 import { limaToday } from "../src/chat/data";
 import { ChatError } from "../src/chat/contracts";
@@ -43,6 +43,23 @@ async function main() {
     return chain;
   } } as unknown as SupabaseClient;
   const ai = gemini();
+  const generate = ai.models.generateContent.bind(ai.models);
+  let firstModel: string | undefined;
+  ai.models.generateContent = async (params) => {
+    firstModel ??= params.model;
+    try { return await generate(params); }
+    catch (error) {
+      // Diagnose provider availability without printing Secret model identifiers,
+      // request bodies, API keys or raw provider messages.
+      console.error(JSON.stringify({
+        check: "provider_attempt", role: params.model === firstModel ? "primary" : "fallback",
+        status: (error as { status?: number })?.status ?? null,
+        demand: error instanceof Error && /high demand|overload/i.test(error.message),
+        timedOut: error instanceof Error && /timeout|timed out|aborted/i.test(error.message),
+      }));
+      throw error;
+    }
+  };
   const userId = randomUUID();
   const readReply = await chatAnswer(sb, userId, {
     action: "message", history: [{ role: "user", text: "¿A quién debo llamar hoy? Consulte el CRM y mencione la institución." }],
@@ -50,7 +67,7 @@ async function main() {
   assert.match(readReply.text, /Demostraci[oó]n/i);
   assert.equal(readReply.proposal, undefined);
   assert.ok(queries > 0);
-  console.log(JSON.stringify({ model: MODEL, check: "live_function_calling_read", passed: true }));
+  console.log(JSON.stringify({ check: "live_function_calling_read", passed: true }));
 
   const proposalReply = await chatAnswer(sb, userId, {
     action: "message",
@@ -63,12 +80,12 @@ async function main() {
   assert.equal(proposalReply.saved, undefined);
   assert.equal(attemptedWrites, 0);
   if (proposalReply.proposal) cancelProposal(proposalReply.proposal.id, userId);
-  console.log(JSON.stringify({ model: MODEL, check: "live_proposal_and_commercial_privacy_gate", passed: true, attemptedWrites }));
+  console.log(JSON.stringify({ check: "live_proposal_and_commercial_privacy_gate", passed: true, attemptedWrites }));
 
   await assert.rejects(privacyCheck(ai, {
     transcripcion_resumen: "Caso ficticio de prueba: el médico tiene hipertensión; guardar ese dato de salud personal.",
   }), (error: unknown) => (error as { status?: number }).status === 400);
-  console.log(JSON.stringify({ model: MODEL, check: "live_sensitive_data_rejected", passed: true }));
+  console.log(JSON.stringify({ check: "live_sensitive_data_rejected", passed: true }));
 }
 
 main().catch((error: unknown) => {

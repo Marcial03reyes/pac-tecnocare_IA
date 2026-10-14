@@ -123,6 +123,9 @@ components:
           type: boolean
         retryable:
           type: boolean
+        notice:
+          type: string
+          description: Discreet operational notice, without secret values or provider details.
     HealthStatus:
       type: object
       properties:
