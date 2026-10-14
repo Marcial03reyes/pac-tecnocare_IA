@@ -8,7 +8,7 @@ import { ChatError, WRITE_TOOLS, type WriteTool } from "./contracts";
 import { limaToday, readTool } from "./data";
 import { prepareProposal } from "./proposals";
 
-export const MODEL = "gemini-2.5-flash";
+export const MODEL = "gemini-3-flash-preview";
 export function providerError(error: unknown): ChatError {
   const status = (error as { status?: unknown })?.status;
   if (status === 404) return new ChatError(503, `Google no permite usar ${MODEL} con esta clave. El administrador debe autorizar un modelo disponible antes de continuar.`, "model_unavailable");
