@@ -14,6 +14,7 @@ import NotasPage from "@/pages/notas";
 import ApolloPage from "@/pages/apollo";
 import ReportesPage from "@/pages/reportes";
 import EmbudoPage from "@/pages/embudo";
+import AsistentePage from "@/pages/asistente";
 import { AuthProvider } from "@/auth/auth-provider";
 import { Protected } from "@/components/protected";
 import { PanelLayout } from "@/components/panel-layout";
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/panel/embudo"><Private><EmbudoPage /></Private></Route>
       <Route path="/panel/llamadas"><Private><LlamadasPage /></Private></Route>
       <Route path="/panel/notas-de-voz"><Private><NotasPage /></Private></Route>
+      <Route path="/panel/asistente"><Private><AsistentePage /></Private></Route>
       <Route path="/panel/apollo"><Private><ApolloPage /></Private></Route>
       <Route path="/panel/reportes"><Private><ReportesPage /></Private></Route>
       <Route component={NotFound} />

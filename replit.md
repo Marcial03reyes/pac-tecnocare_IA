@@ -34,7 +34,7 @@ _Populate as you build — short repo map plus pointers to the source-of-truth f
 
 ## Product
 
-Public equipment and community information; protected commercial dashboard; editable contacts with stage, temperature and origin filters; scheduled followups; manual meeting entry; structured copilot analysis from existing reuniones.analisis; WhatsApp/email/call composers and a mobile-accessible stage board at /panel/embudo. Apollo displays clearly labelled local example leads with contact creation. Reports combine real database aggregates with a distinctly labelled illustrative projection. Granola recording remains “Próximamente”.
+Public equipment and community information; protected commercial dashboard; editable contacts with stage, temperature and origin filters; scheduled followups; manual meeting entry; structured copilot analysis from existing reuniones.analisis; WhatsApp/email/call composers and a mobile-accessible stage board at /panel/embudo. Asistente PAC at /panel/asistente uses the API server's /api/chat, server-only Gemini, Supabase bearer-authenticated RLS, read tools and explicitly confirmed write proposals. Browser dictation uses es-PE and never sends automatically. No chat-history table; messages stay in session memory. The orange Nota de voz button opens Asistente PAC; the old notes route remains available. Apollo displays clearly labelled local example leads with contact creation. Reports combine real database aggregates with a distinctly labelled illustrative projection.
 
 ## User preferences
 

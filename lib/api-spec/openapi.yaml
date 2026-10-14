@@ -11,6 +11,32 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /chat:
+    post:
+      operationId: pacChat
+      tags: [chat]
+      summary: Asistente PAC authenticated chat and explicitly confirmed writes
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PacChatInput"
+      responses:
+        "200":
+          description: Answer, pending proposal, or confirmed write result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PacChatReply"
+        "401":
+          description: Invalid or expired Supabase session
+        "409":
+          description: Proposal expired, already executing, or source record changed
+        "503":
+          description: AI provider or data service unavailable
   /healthz:
     get:
       operationId: healthCheck
@@ -25,7 +51,78 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
   schemas:
+    PacChatMessage:
+      type: object
+      required: [role, text]
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        text:
+          type: string
+          maxLength: 16000
+    PacChatInput:
+      type: object
+      required: [action, history]
+      properties:
+        action:
+          type: string
+          enum: [message, confirm, correct]
+        history:
+          type: array
+          maxItems: 60
+          items:
+            $ref: "#/components/schemas/PacChatMessage"
+        confirmationId:
+          type: string
+        requestId:
+          type: string
+          description: Per-message idempotency key, reused when retrying the same request
+    PacChatProposal:
+      type: object
+      required: [id, tool, title, fields, expiresAt]
+      properties:
+        id:
+          type: string
+        tool:
+          type: string
+        title:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/PacChatField"
+        expiresAt:
+          type: string
+    PacChatField:
+      type: object
+      required: [label, value]
+      properties:
+        label:
+          type: string
+        value:
+          type: string
+    PacChatReply:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+        proposal:
+          $ref: "#/components/schemas/PacChatProposal"
+        contactId:
+          type: string
+        saved:
+          type: boolean
+        partial:
+          type: boolean
+        retryable:
+          type: boolean
     HealthStatus:
       type: object
       properties:
