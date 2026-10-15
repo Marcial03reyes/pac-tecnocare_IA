@@ -6,10 +6,10 @@ import { normalizarTemp } from "@/lib/temperatura";
 import { useCrmMutation } from "@/hooks/use-crm-mutation";
 import { FormField, FormShell, inputClass, actionClass } from "./crm-form-shell";
 
-export function ContactEditor({ cliente, initialStage, onClose }: { cliente?: Cliente; initialStage?: string; onClose: () => void }) {
+export function ContactEditor({ cliente, initialStage, initialName, onCreated, onClose }: { cliente?: Cliente; initialStage?: string; initialName?: string; onCreated?: (cliente: Cliente) => void; onClose: () => void }) {
   const temperature = normalizarTemp(cliente?.temperatura_actual);
   const [values, setValues] = useState<Record<string, string>>({
-    nombre: cliente?.nombre ?? "", institucion: cliente?.institucion ?? "", especialidad: cliente?.especialidad ?? "",
+    nombre: cliente?.nombre ?? initialName ?? "", institucion: cliente?.institucion ?? "", especialidad: cliente?.especialidad ?? "",
     telefono: cliente?.telefono ?? "", email: cliente?.email ?? "", origen: cliente?.origen ?? "",
     etapa_actual: initialStage ?? cliente?.etapa_actual ?? (cliente ? "" : "Lead"),
     temperatura_actual: temperature === "Sin dato" ? "" : temperature,
@@ -30,7 +30,8 @@ export function ContactEditor({ cliente, initialStage, onClose }: { cliente?: Cl
       return value !== shown;
     })) as Partial<Cliente> : editable;
     try {
-      await mutation.mutateAsync(cliente ? { kind: "update", cliente, patch } : { kind: "create", patch });
+      const result = await mutation.mutateAsync(cliente ? { kind: "update", cliente, patch } : { kind: "create", patch });
+      if (!cliente && onCreated && result && "id" in result) onCreated(result as Cliente);
       onClose();
     } catch { /* mutation renders the error toast; preserve entered values */ }
   };

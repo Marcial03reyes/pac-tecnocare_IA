@@ -7,6 +7,7 @@ import { VoiceNoteButton } from "@/components/voice-note-modal";
 import { useSeguimientos } from "@/hooks/use-pac-data";
 import { useToast } from "@/hooks/use-toast";
 import { todayLima } from "@/lib/format";
+import { GranolaNotice } from "@/components/granola-notice";
 
 const NAV = [
   { href: "/panel", label: "Inicio", icon: Home },
@@ -57,10 +58,13 @@ export function PanelLayout({ children }: { children: ReactNode }) {
       {NAV.map(({ href, label, icon: Icon }) => {
         const active = location === href || (href !== "/panel" && location.startsWith(href));
         return (
-          <Link key={href} href={href} onClick={() => setOpen(false)} data-testid={`link-nav-${label.toLowerCase().replace(/\s/g, "-")}`}
-            className={`group flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium transition-colors ${active ? "bg-[#2F6FDB] text-white shadow-sm" : "text-[#B9C2D6] hover:bg-white/5 hover:text-white"}`}>
-            <Icon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /> {label}
-          </Link>
+          <div key={href} className="flex items-center gap-1">
+            <Link href={href} onClick={() => setOpen(false)} data-testid={`link-nav-${label.toLowerCase().replace(/\s/g, "-")}`}
+              className={`group flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium transition-colors ${active ? "bg-[#2F6FDB] text-white shadow-sm" : "text-[#B9C2D6] hover:bg-white/5 hover:text-white"}`}>
+              <Icon className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" /> {label}
+            </Link>
+            {label === "Contactos" && <div onClick={() => setOpen(false)}><GranolaNotice compact /></div>}
+          </div>
         );
       })}
       <div className="mt-auto border-t border-white/10 pt-3">

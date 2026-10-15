@@ -9,6 +9,7 @@ import { Bone, EmptyState, ErrorState } from "@/components/states";
 import { useReuniones, useSeguimientos } from "@/hooks/use-pac-data";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import { greetingLima, todayLima } from "@/lib/format";
+import { GranolaNotice } from "@/components/granola-notice";
 
 function SectionHead({ title, href, label }: { title: string; href: string; label: string }) {
   return (
@@ -28,7 +29,7 @@ export default function PanelInicio() {
 
   return (
     <>
-      <PageHeader eyebrow="Panel comercial" title={`${greetingLima()}, Víctor`} />
+      <PageHeader eyebrow="Panel comercial" title={`${greetingLima()}, Víctor`} action={<GranolaNotice />} />
       <KpiRow />
       <div className="grid gap-5 lg:grid-cols-[1.1fr_1fr]">
         <section className="pac-card fade-up overflow-hidden">

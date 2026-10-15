@@ -9,6 +9,12 @@ Use the existing Supabase schema and preserve copilot analysis; a frontend CRM e
 
 **How to apply:** Make no schema or permission changes without a separate request. If atomic multi-table writes require a new server-side function, propose it separately rather than silently provisioning it during frontend work.
 
+Las notas de Granola las crea y procesa un sincronizador externo. El CRM nunca debe insertar ni borrar notas; solo puede cambiar `cliente_id` y `estado` a `listo`, `ignorada` o `por_asignar`.
+
+**Why:** El usuario definió explícitamente esta separación de responsabilidades; el CRM no es dueño de la sincronización ni del análisis.
+
+**How to apply:** No crear tablas, disparadores, políticas ni procesos alternativos para Granola. Conservar los errores del sincronizador y evitar sobrescribir notas que ya pasaron a procesamiento. La creación de un contacto y su asignación son operaciones separadas: conservar el contacto si falla la asignación, sin duplicarlo al reintentar.
+
 The Embudo's Lead / Negociación / Ganado columns are presentation groups, not a replacement stage vocabulary. Perdido and Descartado belong in the closed list; active and unknown stages belong in Negociación.
 
 **Why:** The user explicitly requested three columns while keeping the database and the copilot's detailed stages unchanged. The column name Negociación also exists as a detailed stage, so confusing the two would overwrite analysis.
