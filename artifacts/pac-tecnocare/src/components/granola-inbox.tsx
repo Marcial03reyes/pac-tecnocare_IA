@@ -7,10 +7,17 @@ import type { Cliente } from "@/lib/types";
 import { Bone } from "@/components/states";
 import { ContactEditor } from "@/components/contact-editor";
 
-function Status({ estado }: { estado: GranolaNota["estado"] }) {
-  const label = estado === "por_asignar" ? "Por asignar" : estado === "error" ? "Error" : estado === "procesando" || estado === "listo" ? "Procesando…" : estado === "ignorada" ? "Ignorada" : "Procesada";
-  const styles = estado === "error" ? "bg-[#FDECEC] text-[#B42F2F]" : estado === "por_asignar" ? "bg-[#FFF2E4] text-[#A6530A]" : "bg-[#EAF1FC] text-[#2F6FDB]";
-  return <span data-testid={`status-granola-${estado}`} className={`inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${styles}`}>{estado === "error" && <AlertCircle className="h-3 w-3" />}{(estado === "listo" || estado === "procesando") && <LoaderCircle className="h-3 w-3 animate-spin" />}{label}</span>;
+/** Errores pasajeros (cuota o saturación de la IA): la grabación está a salvo, solo falta analizarla. */
+export function esEsperaIA(note: Pick<GranolaNota, "estado" | "error">): boolean {
+  return note.estado === "error" && /429|503|RESOURCE_EXHAUSTED|quota|cuota|UNAVAILABLE|overloaded|demanda/i.test(note.error ?? "");
+}
+
+function Status({ note }: { note: GranolaNota }) {
+  const { estado } = note;
+  const espera = esEsperaIA(note);
+  const label = espera ? "Audio registrado · análisis en cola" : estado === "por_asignar" ? "Audio registrado · por asignar" : estado === "error" ? "Error" : estado === "listo" ? "En cola para análisis" : estado === "procesando" ? "Analizando con IA…" : estado === "ignorada" ? "Ignorada" : "Analizada";
+  const styles = espera || estado === "listo" ? "bg-[#FFF2E4] text-[#A6530A]" : estado === "error" ? "bg-[#FDECEC] text-[#B42F2F]" : estado === "por_asignar" ? "bg-[#FFF2E4] text-[#A6530A]" : estado === "procesada" ? "bg-[#E6F6EE] text-[#1F7A4D]" : "bg-[#EAF1FC] text-[#2F6FDB]";
+  return <span data-testid={`status-granola-${espera ? "en-cola" : estado}`} className={`inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${styles}`}>{estado === "error" && !espera && <AlertCircle className="h-3 w-3" />}{(espera || estado === "listo") && <Clock3 className="h-3 w-3" />}{estado === "procesando" && <LoaderCircle className="h-3 w-3 animate-spin" />}{estado === "por_asignar" && <AudioLines className="h-3 w-3" />}{label}</span>;
 }
 
 function clientLabel(cliente: Cliente) {
@@ -94,12 +101,13 @@ export function GranolaInbox() {
           return <article key={note.note_id} data-testid={`card-granola-${note.note_id}`} className="rounded-lg border border-[#E0E6EF] bg-white p-4 shadow-[0_1px_2px_rgba(20,33,61,.03)]">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5"><h3 className="min-w-0 break-words text-sm font-semibold leading-5 text-[#14213D]">{note.titulo || "Reunión sin título"}</h3><Status estado={note.estado} /></div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5"><h3 className="min-w-0 break-words text-sm font-semibold leading-5 text-[#14213D]">{note.titulo || "Reunión sin título"}</h3><Status note={note} /></div>
                 <p className="mt-1.5 flex items-center gap-1.5 text-xs text-[#69748A]"><Clock3 className="h-3.5 w-3.5" />{granolaDate(note.fecha)}</p>
-                {note.estado === "error" && note.error && <p role="alert" className="mt-2 rounded-md border border-[#F3D4D4] bg-[#FFF8F8] px-3 py-2 text-xs text-[#963A3A]">{note.error}</p>}
+                {esEsperaIA(note) && <p role="status" className="mt-2 rounded-md border border-[#F6DDC2] bg-[#FFF9F2] px-3 py-2 text-xs text-[#8A4A0E]">La grabación y su transcripción ya están guardadas. La IA está saturada por ahora; pulsa «Analizar ahora» más tarde y se completará el resumen.</p>}
+                {note.estado === "error" && note.error && !esEsperaIA(note) && <p role="alert" className="mt-2 rounded-md border border-[#F3D4D4] bg-[#FFF8F8] px-3 py-2 text-xs text-[#963A3A]">{note.error}</p>}
                 {retained && <p role="status" className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-[#A6530A]"><AlertCircle className="h-3.5 w-3.5" />Contacto creado; falta asignar: {clientLabel(retained)}</p>}
               </div>
-              {!history && note.estado === "error" && <button type="button" onClick={() => void act(note, { kind: "retry" })} disabled={granola.isPending} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-[#D9DFEA] px-3 py-2 text-xs font-semibold text-[#2F6FDB] disabled:opacity-50" data-testid={`button-retry-granola-${note.note_id}`}><RefreshCw className={`h-3.5 w-3.5 ${isPending ? "animate-spin" : ""}`} />{isPending ? "Reintentando…" : "Reintentar"}</button>}
+              {!history && note.estado === "error" && <button type="button" onClick={() => void act(note, { kind: "retry" })} disabled={granola.isPending} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-[#D9DFEA] px-3 py-2 text-xs font-semibold text-[#2F6FDB] disabled:opacity-50" data-testid={`button-retry-granola-${note.note_id}`}><RefreshCw className={`h-3.5 w-3.5 ${isPending ? "animate-spin" : ""}`} />{isPending ? "Reintentando…" : esEsperaIA(note) ? "Analizar ahora" : "Reintentar"}</button>}
             </div>
             {!history && note.estado === "por_asignar" && <div className="mt-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
               {retained ? <button type="button" onClick={() => void act(note, { kind: "assign", clienteId: retained.id })} disabled={granola.isPending} className="inline-flex items-center justify-center gap-2 rounded-md bg-[#2F6FDB] px-3 py-2 text-xs font-semibold text-white hover:bg-[#255FC2] disabled:opacity-50 sm:col-span-2" data-testid={`button-retry-assignment-${note.note_id}`}><RefreshCw className={`h-3.5 w-3.5 ${isPending ? "animate-spin" : ""}`} />{isPending ? "Asignando…" : `Reintentar asignación a ${clientLabel(retained)}`}</button> : <>
