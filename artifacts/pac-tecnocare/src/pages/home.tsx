@@ -51,9 +51,12 @@ export default function HomePage() {
               <button onClick={() => go("equipos")} data-testid="button-ver-equipos" className="rounded-md border border-[#D5DAE4] bg-white px-5 py-2.5 text-sm font-medium transition hover:border-[#14213D]">Ver equipos</button>
             </div>
           </div>
-          <div className="fade-up relative" style={{ animationDelay: "120ms" }}>
-            <div className="absolute inset-6 rounded-[32px] bg-gradient-to-br from-[#DCE7FA] to-[#F4F6FB]" />
-            <img src={equipo} alt="Generador de ozono médico" className="relative mx-auto w-full max-w-md drop-shadow-[0_24px_30px_rgba(20,33,61,.18)]" />
+          <div className="mx-auto w-full max-w-[90%] md:max-w-[560px]">
+            <img
+              src={`${import.meta.env.BASE_URL}om302_hero.png`}
+              alt="Generador de ozono médico OM-302 con medición dual de concentración"
+              className="block h-auto w-full object-contain"
+            />
           </div>
         </div>
       </section>
