@@ -1,4 +1,7 @@
 import { useState, type FormEvent } from "react";
+import { Sparkles, Loader2 } from "lucide-react";
+import { requireSupabase } from "@/lib/supabase";
+import { todayLima } from "@/lib/format";
 import type { Cliente, Reunion } from "@/lib/types";
 import { STAGES, displayStage } from "@/lib/contact-stages";
 import { normalizarTemp } from "@/lib/temperatura";
@@ -17,6 +20,34 @@ export function MeetingForm({ cliente, onClose }: { cliente: Cliente; onClose: (
   const [savedId, setSavedId] = useState<Reunion["id"]>();
   const [syncError, setSyncError] = useState<string | null>(null);
   const mutation = useCrmMutation();
+  const [transcripcion, setTranscripcion] = useState("");
+  const [ia, setIa] = useState<{ busy: boolean; error: string | null; producto: string | null; done: boolean }>({ busy: false, error: null, producto: null, done: false });
+  const analizar = async () => {
+    setIa({ busy: true, error: null, producto: null, done: false });
+    try {
+      const { data } = await requireSupabase().auth.getSession();
+      if (!data.session) throw new Error("Tu sesión expiró. Vuelve a ingresar.");
+      const res = await fetch(`${import.meta.env.BASE_URL.replace(/\/$/, "")}/api/reuniones/analizar`, {
+        method: "POST", cache: "no-store",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
+        body: JSON.stringify({ transcripcion, hoy: todayLima(), cliente: { nombre: cliente.nombre, institucion: cliente.institucion, especialidad: cliente.especialidad, etapa: stage, temperatura: temp } }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || "No se pudo analizar la reunión.");
+      setValues((old) => ({
+        ...old,
+        etapa: (STAGES as readonly string[]).includes(body.etapa) ? body.etapa : old.etapa,
+        temperatura: body.temperatura || old.temperatura,
+        resumen: body.resumen ?? old.resumen, objeciones: body.objeciones ?? old.objeciones,
+        acuerdos: body.acuerdos ?? old.acuerdos, borrador: body.borrador_whatsapp ?? old.borrador,
+        fechaSeguimiento: body.proximo_contacto_fecha || old.fechaSeguimiento,
+        motivoSeguimiento: body.proximo_contacto_fecha ? (body.motivo_seguimiento || old.motivoSeguimiento) : old.motivoSeguimiento,
+      }));
+      setIa({ busy: false, error: null, producto: body.producto_sugerido || null, done: true });
+    } catch (e) {
+      setIa({ busy: false, error: e instanceof Error ? e.message : "No se pudo analizar la reunión.", producto: null, done: false });
+    }
+  };
   const set = (key: keyof typeof values, value: string) => setValues((old) => ({ ...old, [key]: value }));
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -37,8 +68,23 @@ export function MeetingForm({ cliente, onClose }: { cliente: Cliente; onClose: (
       }
     } catch { /* preserve form for retry; hook reports error */ }
   };
-  return <FormShell title="Registrar reunión" description={`Reunión manual con ${cliente.nombre || "este contacto"}. Fecha y hora de Perú. No genera análisis automático.`} onClose={onClose} busy={mutation.isPending}>
+  return <FormShell title="Registrar reunión" description={`Reunión manual con ${cliente.nombre || "este contacto"}. Fecha y hora de Perú. Pega la transcripción y la IA completa el formulario; tú revisas antes de guardar.`} onClose={onClose} busy={mutation.isPending}>
     <form className="space-y-4" onSubmit={submit}>
+      {savedId == null && (
+        <div className="rounded-lg border border-[#2F6FDB]/25 bg-[#F4F6FB] p-3" data-testid="panel-copiloto">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-[#14213D]"><Sparkles className="h-4 w-4 text-[#F28C28]" />Copiloto de reuniones</p>
+          <p className="mt-0.5 text-[12px] text-muted-foreground">Pega la transcripción (Granola, Meet, Zoom) o tus notas. Se quitan DNI, correos y celulares antes de enviarla a la IA, y no se guarda.</p>
+          <textarea className={`${inputClass} mt-2`} rows={5} value={transcripcion} onChange={(e) => setTranscripcion(e.target.value)} placeholder={"Víctor: Buenos días doctor…\nDoctor: …"} data-testid="input-transcripcion" disabled={ia.busy || mutation.isPending} />
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <button type="button" onClick={analizar} disabled={ia.busy || mutation.isPending || transcripcion.trim().length < 40} data-testid="button-analizar-ia"
+              className="inline-flex items-center gap-1.5 rounded-md bg-[#F28C28] px-3 py-2 text-sm font-semibold text-white hover:bg-[#E07B17] disabled:opacity-50">
+              {ia.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}{ia.busy ? "Analizando…" : "Completar con IA"}
+            </button>
+            {ia.done && <span className="text-[12px] font-medium text-[#1F9D61]" data-testid="text-ia-listo">✓ Formulario completado. Revisa y corrige antes de registrar.{ia.producto ? ` Producto sugerido: ${ia.producto}.` : ""}</span>}
+          </div>
+          {ia.error && <p role="alert" className="mt-2 rounded-md bg-[#FDECEC] p-2 text-[12px] text-[#B42F2F]">{ia.error}</p>}
+        </div>
+      )}
       {syncError && <p role="alert" className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm">{syncError}</p>}
       <fieldset disabled={mutation.isPending || savedId != null} className="grid gap-3 sm:grid-cols-2">
         <FormField label="Fecha y hora (Perú) *"><input type="datetime-local" required className={inputClass} value={values.fecha} onChange={(e) => set("fecha", e.target.value)} /></FormField>

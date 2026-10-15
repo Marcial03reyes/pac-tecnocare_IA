@@ -4,6 +4,20 @@ CRM comercial con React/Vite, Supabase y un servidor Node/Express para el
 Asistente PAC (Gemini). La web compilada y `/api` se sirven desde **un solo
 proceso y puerto**. No necesita Replit para instalarse ni ejecutarse.
 
+## Módulos del MVP
+
+| Módulo | Ruta | Qué hace |
+|---|---|---|
+| Inicio | `/panel` | Seguimientos del día y resumen del embudo. |
+| Contactos | `/panel/clientes` | Leads, oportunidades y clientes; editar, registrar reunión y agendar seguimiento. |
+| Copiloto de reuniones | «Registrar reunión» | Pega la transcripción y la IA (Gemini) completa resumen, objeciones, acuerdos, etapa, temperatura, fecha de seguimiento y borrador de WhatsApp. Filtro de privacidad previo (DNI, celulares, correos, historias clínicas). Víctor revisa y confirma; nada se guarda solo. API: `POST /api/reuniones/analizar`. |
+| Embudo | `/panel/embudo` | Tablero por etapas. |
+| Ozonar | `/panel/ozonar` | Prospectos reales de `public.prospectos`, calificados 0-100 por el agente de prospección (RENIPRESS + Tavily + Gemini, corre en el VPS). Contactar por WhatsApp/correo crea el Lead y marca el prospecto como Aprobado. |
+| Asistente PAC | `/panel/asistente` | Chat con Gemini que consulta el CRM y propone cambios que requieren confirmación. |
+| Reportes | `/panel/reportes` | Indicadores del embudo y orígenes. |
+
+La tabla `prospectos` necesita políticas RLS de lectura (y de actualización a Aprobado/Descartado) para usuarios autenticados.
+
 ## Requisitos
 
 - Node.js **22.12 o superior** y npm.
