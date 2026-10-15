@@ -14,3 +14,9 @@ Los cambios de seguridad deben comprobarse por separado en las instalaciones de 
 **Why:** En este workspace, npm conservó una versión transitiva vulnerable después de añadir el override y ejecutar una actualización dirigida. El análisis de pnpm además incluye herramientas de mockups y generación que no forman parte del paquete npm de producción.
 
 **How to apply:** Verificar las versiones realmente resueltas, la instalación limpia con npm y los dos análisis antes de afirmar que una alerta quedó corregida. Distinguir las alertas del workspace completo de las del paquete que se desplegará.
+
+Al exportar PAC sin historial para GitHub, preservar la rama `main` local y sus checkpoints. Preparar el commit raíz en una rama huérfana y copia de trabajo separadas.
+
+**Why:** El usuario pidió expresamente conservar el historial local y publicar solo una instantánea limpia en el repositorio remoto vacío.
+
+**How to apply:** No usar reset, filtrado de historial ni eliminación de commits sobre `main` local. Comprobar también `.replit`: una asignación de una variable sensible en ese archivo debe revisarse como posible credencial aunque no coincida con los prefijos habituales de claves. Los valores privados deben permanecer en Secrets.
