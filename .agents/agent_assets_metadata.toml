@@ -5,14 +5,14 @@ generated = []
 id = "mSigE5xlt550eb0uhqsBc"
 uri = "file://generated-artifacts/pac-tecnocare-codigo.zip"
 type = "unspecified"
-title = "PAC TECNOCARE — Código fuente"
-description = "ZIP con la web, servidor del Asistente, bibliotecas internas, logos y guía LEEME-VPS.md. Sin secretos ni datos de Supabase."
+title = "PAC TECNOCARE — Código portable para EasyPanel"
+description = "Versión actualizada: instalación npm, Dockerfile, README, variables de ejemplo y pruebas de portabilidad. Sin claves ni datos de Supabase."
 logical_id = "1db77172-3beb-4885-8e35-21c819f4ca37"
-content_hash = "sha256:7aa6778787e616c0818125cd94a130f5f011a44a51f3a3eec2eab3ee3ee9b836"
-size = 2119546
-mtime_ms = 1792074650612
-storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:0e116d2e-00f1-4b5b-838f-4e371c94c7ba/1db77172-3beb-4885-8e35-21c819f4ca37/f5de0944-b2b5-48e5-a334-0947895e8eda"
-storage_version_token = "1792074655154498"
+content_hash = "sha256:a03fd69d22591a0d116817b40e5d768e2426b8c3d4f2a42e6318977bb660c6da"
+size = 2180467
+mtime_ms = 1792077671070
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:0e116d2e-00f1-4b5b-838f-4e371c94c7ba/1db77172-3beb-4885-8e35-21c819f4ca37/0c6aacf3-0282-4679-a289-5866acec07cd"
+storage_version_token = "1792077676484803"
 content_type = "application/octet-stream"
 
 [[outputs]]

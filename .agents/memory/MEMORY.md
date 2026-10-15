@@ -1,3 +1,4 @@
 - [CRM data ownership](crm-data-ownership.md) — existing Supabase and external copilot contracts are not owned by frontend CRM extensions.
 - [Gemini models and history](gemini-model-availability.md) — authorized fallbacks, quota retries, signed multi-turn history, and safe provider diagnostics.
 - [Capturas descargables](capturas-descargables.md) — verificar archivos PNG físicos antes de prometer una carpeta descargable.
+- [Destino de despliegue](destino-despliegue.md) — PAC debe seguir siendo portable a un VPS con EasyPanel y Docker, sin servicios exclusivos de Replit.

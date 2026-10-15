@@ -5,6 +5,8 @@ packages:
   - scripts
 
 autoInstallPeers: false
+strictPeerDependencies: false
+linkWorkspacePackages: true
 
 catalog:
   '@replit/vite-plugin-cartographer': ^0.5.21
