@@ -19,6 +19,11 @@
     "typecheck": "npm run typecheck:libs && npm run typecheck --workspaces --if-present"
   },
   "private": true,
+  "overrides": {
+    "@tailwindcss/typography": {
+      "postcss-selector-parser": "7.1.6"
+    }
+  },
   "devDependencies": {
     "prettier": "^3.9.6",
     "typescript": "~5.9.3"
