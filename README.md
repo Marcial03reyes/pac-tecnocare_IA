@@ -1,4 +1,4 @@
-# PAC — TECNOCARE
+# TECNOCARE - SOLUCIÓN PAC
 
 CRM comercial con React/Vite, Supabase y un servidor Node/Express para el
 Asistente PAC (Gemini). La web compilada y `/api` se sirven desde **un solo
