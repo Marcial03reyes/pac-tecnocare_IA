@@ -14,3 +14,17 @@ mtime_ms = 1792074650612
 storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:0e116d2e-00f1-4b5b-838f-4e371c94c7ba/1db77172-3beb-4885-8e35-21c819f4ca37/f5de0944-b2b5-48e5-a334-0947895e8eda"
 storage_version_token = "1792074655154498"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "pXwn-S7zB98t0fbWATgWx"
+uri = "file://generated-artifacts/capturas-pac.zip"
+type = "unspecified"
+title = "PAC TECNOCARE — 30 capturas PNG"
+description = "Carpeta ZIP con vistas públicas, panel, Contactos, formularios, Ruta de venta, Llamadas, Asistente, Apollo, Reportes y vistas móviles. Panel capturado con datos de ejemplo."
+logical_id = "61b2f69e-a4a5-48d5-996a-c38fcfe4832b"
+content_hash = "sha256:28afa271cd5c953edd5f9257553ca41911192046a5451d0a30749eeab9bb2626"
+size = 3731279
+mtime_ms = 1792075890052
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:0e116d2e-00f1-4b5b-838f-4e371c94c7ba/61b2f69e-a4a5-48d5-996a-c38fcfe4832b/3fd9034c-5416-426a-a0e1-aa0e5a0fba58"
+storage_version_token = "1792075913350529"
+content_type = "application/octet-stream"
