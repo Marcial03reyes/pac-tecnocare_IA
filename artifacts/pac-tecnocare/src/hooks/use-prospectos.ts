@@ -67,7 +67,7 @@ export function useProspectos() {
         .from("prospectos")
         .select(COLS)
         .not("afinidad", "is", null)
-        .not("estado", "in", "(Aprobado,Descartado)")
+        .neq("estado", "Descartado") // los ya contactados (Aprobado) siguen visibles con su check verde
         .order("afinidad", { ascending: false })
         .limit(MAX);
       if (error) return [];
