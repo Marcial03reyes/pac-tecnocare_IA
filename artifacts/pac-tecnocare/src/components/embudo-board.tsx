@@ -244,7 +244,7 @@ export function EmbudoBoard(props: Props) {
   return (
     <section className="min-w-0">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-1 items-stretch overflow-hidden rounded-lg border border-[#DCE3EB] shadow-[0_1px_2px_rgba(20,33,61,.04)]" role="group" aria-label="Flujo del embudo">
+        <div className="flex min-w-0 flex-1 items-stretch overflow-hidden rounded-lg border border-[#DCE3EB] shadow-[0_1px_2px_rgba(20,33,61,.04)]" role="group" aria-label="Ruta de venta">
           {FLOW.map((step, index) => (
             <div key={step.key} className="contents">
               <button

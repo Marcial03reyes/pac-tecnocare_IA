@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Users, Phone, MessageCircle, Orbit, BarChart3, Filter, LogOut, Menu, X } from "lucide-react";
+import { Home, Users, Phone, MessageCircle, Orbit, BarChart3, Route, LogOut, Menu, X } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useAuth } from "@/auth/auth-provider";
 import { VoiceNoteButton } from "@/components/voice-note-modal";
@@ -11,7 +11,7 @@ import { todayLima } from "@/lib/format";
 const NAV = [
   { href: "/panel", label: "Inicio", icon: Home },
   { href: "/panel/clientes", label: "Contactos", icon: Users },
-  { href: "/panel/embudo", label: "Embudo", icon: Filter },
+  { href: "/panel/embudo", label: "Ruta de venta", icon: Route },
   { href: "/panel/llamadas", label: "Llamadas", icon: Phone },
   { href: "/panel/asistente", label: "Asistente PAC", icon: MessageCircle },
   { href: "/panel/apollo", label: "Apollo", icon: Orbit },

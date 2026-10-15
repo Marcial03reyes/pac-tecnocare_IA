@@ -27,7 +27,7 @@ const TEMPERATURES: { value: Temperatura; color: string; title: string }[] = [
 const COLUMN_NAMES: Record<FunnelColumn, string> = { lead: "Lead", negotiation: "Negociación", won: "Ganado" };
 
 export default function EmbudoPage() {
-  usePageMeta("Embudo — PAC TECNOCARE", "Oportunidades por etapa comercial.");
+  usePageMeta("Ruta de venta — PAC TECNOCARE", "Oportunidades por etapa comercial.");
   const query = useClientes();
   const crm = useCrmMutation();
   const [selected, setSelected] = useState<Cliente | null>(null);
@@ -170,13 +170,13 @@ export default function EmbudoPage() {
           ? `${moveIntent.cliente.nombre || "Este contacto"} pasará a ${COLUMN_NAMES[moveIntent.target]}.`
           : "";
 
-  if (query.isError) return <><PageHeader eyebrow="Pipeline comercial" title="Embudo" /><ErrorState error={query.error} onRetry={() => query.refetch()} retrying={query.isFetching} /></>;
+  if (query.isError) return <><PageHeader eyebrow="Pipeline comercial" title="Ruta de venta" /><ErrorState error={query.error} onRetry={() => query.refetch()} retrying={query.isFetching} /></>;
 
   return (
     <>
-      <PageHeader eyebrow="Pipeline comercial" title="Embudo" />
+      <PageHeader eyebrow="Pipeline comercial" title="Ruta de venta" />
       {query.isLoading && (
-        <div className="grid h-[min(64vh,690px)] min-h-[330px] grid-cols-1 gap-3 md:grid-cols-3" aria-label="Cargando embudo">
+        <div className="grid h-[min(64vh,690px)] min-h-[330px] grid-cols-1 gap-3 md:grid-cols-3" aria-label="Cargando ruta de venta">
           {["lead", "negotiation", "won"].map((key) => (
             <div key={key} className="space-y-3 rounded-lg border border-[#D8DFEB] bg-[#F0F3F8] p-3">
               <Bone className="h-5 w-24" />

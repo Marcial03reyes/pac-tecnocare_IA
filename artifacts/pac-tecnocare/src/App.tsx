@@ -10,7 +10,6 @@ import LoginPage from "@/pages/login";
 import PanelInicio from "@/pages/panel-inicio";
 import ClientesPage from "@/pages/clientes";
 import LlamadasPage from "@/pages/llamadas";
-import NotasPage from "@/pages/notas";
 import ApolloPage from "@/pages/apollo";
 import ReportesPage from "@/pages/reportes";
 import EmbudoPage from "@/pages/embudo";
@@ -36,7 +35,6 @@ function Router() {
       <Route path="/panel/clientes"><Private><ClientesPage /></Private></Route>
       <Route path="/panel/embudo"><Private><EmbudoPage /></Private></Route>
       <Route path="/panel/llamadas"><Private><LlamadasPage /></Private></Route>
-      <Route path="/panel/notas-de-voz"><Private><NotasPage /></Private></Route>
       <Route path="/panel/asistente"><Private><AsistentePage /></Private></Route>
       <Route path="/panel/apollo"><Private><ApolloPage /></Private></Route>
       <Route path="/panel/reportes"><Private><ReportesPage /></Private></Route>

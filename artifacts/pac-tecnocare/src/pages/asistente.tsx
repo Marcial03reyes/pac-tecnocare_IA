@@ -37,10 +37,10 @@ interface SpeechRecognitionConstructor {
 }
 
 const suggestions = [
-  "¿A quién debo llamar hoy?",
-  "Registrar una reunión",
-  "¿Qué se habló con…?",
-  "¿Qué clientes están calientes?",
+  { label: "¿A quién debo llamar hoy?", draft: "¿A quién debo llamar hoy?" },
+  { label: "Registrar una reunión", draft: "Registra una reunión con " },
+  { label: "¿Qué se habló con…?", draft: "¿Qué se habló con " },
+  { label: "¿Qué clientes están calientes?", draft: "¿Qué clientes están calientes?" },
 ];
 
 function isProposalExpired(message: AssistantMessage): boolean {
@@ -183,6 +183,28 @@ export default function AsistentePage() {
   const mountedRef = useRef(true);
 
   useEffect(() => {
+    const focusComposer = () => {
+      const field = textareaRef.current;
+      if (!field) return;
+      field.focus();
+      field.setSelectionRange(field.value.length, field.value.length);
+    };
+    focusComposer();
+    window.addEventListener("pac-focus-composer", focusComposer);
+    return () => window.removeEventListener("pac-focus-composer", focusComposer);
+  }, []);
+
+  const prepareSuggestion = (text: string) => {
+    setDraft(text);
+    requestAnimationFrame(() => {
+      const field = textareaRef.current;
+      if (!field) return;
+      field.focus();
+      field.setSelectionRange(text.length, text.length);
+    });
+  };
+
+  useEffect(() => {
     setSlow(false);
     if (!awaitingAnswer) return;
     const timer = window.setTimeout(() => setSlow(true), 8000);
@@ -294,7 +316,7 @@ export default function AsistentePage() {
   };
 
   const onDraftKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
       event.currentTarget.form?.requestSubmit();
     }
@@ -327,10 +349,10 @@ export default function AsistentePage() {
               </div>
               <div className="ml-12 grid max-w-2xl grid-cols-1 gap-2 sm:grid-cols-2">
                 {suggestions.map((suggestion) => (
-                  <button key={suggestion} type="button" onClick={() => { setDraft(suggestion); void submit(suggestion, true); }}
+                  <button key={suggestion.label} type="button" onClick={() => prepareSuggestion(suggestion.draft)}
                     disabled={busy}
                     className="group flex min-h-12 items-center justify-between gap-3 rounded-xl border border-[#E9E6DF] bg-[#FFFEFC] px-4 py-3 text-left text-[13px] font-medium text-[#475261] transition hover:border-[#DDA26B] hover:bg-[#FFF8EF] hover:text-[#82480F] disabled:cursor-not-allowed disabled:opacity-50">
-                    <span>{suggestion}</span><ArrowUp className="h-3.5 w-3.5 rotate-45 text-[#AE794B] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    <span>{suggestion.label}</span><ArrowUp className="h-3.5 w-3.5 rotate-45 text-[#AE794B] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </button>
                 ))}
               </div>

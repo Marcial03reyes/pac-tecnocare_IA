@@ -39,7 +39,7 @@ export default function PanelInicio() {
           {hoy.length > 0 && <ul className="divide-y">{hoy.map((c) => <LlamadaRow key={String(c.id)} c={c} today={today} />)}</ul>}
         </section>
         <section className="pac-card fade-up overflow-hidden">
-          <SectionHead title="Últimas notas de voz" href="/panel/notas-de-voz" label="notas" />
+          <SectionHead title="Últimas reuniones" href="/panel/clientes" label="reuniones" />
           <div className="space-y-3 bg-[#F8FAFD] p-3">
             {reu.isError && <ErrorState error={reu.error} onRetry={() => reu.refetch()} retrying={reu.isFetching} />}
             {reu.isLoading && <><Bone className="h-16 w-full" /><Bone className="h-16 w-full" /></>}
