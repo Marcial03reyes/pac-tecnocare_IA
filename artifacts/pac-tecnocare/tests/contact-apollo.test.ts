@@ -48,13 +48,13 @@ function fake(options: {
   return { sb: sb as unknown as SupabaseClient, writes, names };
 }
 
-test("creates Lead with null temperature, Apollo origin and three-day followup", async () => {
+test("creates Lead with null temperature, Ozonar origin and three-day followup", async () => {
   const f = fake();
   assert.deepEqual(await createOrFindApolloClient(f.sb, lead, "user-a"), { clienteId: 42, created: true });
   assert.deepEqual(f.writes, [{
     nombre: lead.nombre, institucion: lead.institucion, especialidad: lead.especialidad,
     telefono: lead.telefono, email: lead.email,
-    temperatura_actual: null, etapa_actual: "Lead", origen: "Apollo",
+    temperatura_actual: null, etapa_actual: "Lead", origen: "Ozonar",
     proximo_contacto_fecha: apolloFollowupDate(todayLima()), proximo_contacto_motivo: "Esperar respuesta",
   }]);
 });

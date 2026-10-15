@@ -29,12 +29,12 @@ _Populate as you build — short repo map plus pointers to the source-of-truth f
 ## Architecture decisions
 
 - Use Supabase Auth with email/password and no public registration, as explicitly requested.
-- The panel uses existing `public.clientes` and `public.reuniones`. “Contactar” offers WhatsApp/Correo, inserts a nonduplicated Apollo lead with null temperature, origin Apollo, and a followup in 3 days. Existing names are reused without rewriting them. Contact stage changes are authorized; no schema changes.
+- The panel uses existing `public.clientes` and `public.reuniones`. “Contactar” offers WhatsApp/Correo, inserts a nonduplicated Ozonar lead with null temperature, origin Ozonar, and a followup in 3 days. Existing names are reused without rewriting them. Contact stage changes are authorized; no schema changes.
 - Compute “today” in the America/Lima timezone.
 
 ## Product
 
-Public equipment and community information; protected commercial dashboard; editable contacts with stage, temperature and origin filters; scheduled followups; manual meeting entry; structured copilot analysis from existing reuniones.analisis; WhatsApp/email/call composers and a mobile-accessible stage board at /panel/embudo. Asistente PAC at /panel/asistente uses the API server's /api/chat, server-only Gemini (GEMINI_MODEL Secret; defaults to gemini-3-flash-preview), Supabase bearer-authenticated RLS, read tools and explicitly confirmed write proposals. Browser dictation uses es-PE and never sends automatically. Pending confirmations expire after 15 minutes and are held in server memory; restarting the server invalidates them. The orange Nota de voz button opens Asistente PAC; the old notes route remains available. Apollo displays clearly labelled local example leads with contact creation. Reports combine real database aggregates with a distinctly labelled illustrative projection.
+Public equipment and community information; protected commercial dashboard; editable contacts with stage, temperature and origin filters; scheduled followups; manual meeting entry; structured copilot analysis from existing reuniones.analisis; WhatsApp/email/call composers and a mobile-accessible stage board at /panel/embudo. Asistente PAC at /panel/asistente uses the API server's /api/chat, server-only Gemini (GEMINI_MODEL Secret; defaults to gemini-3-flash-preview), Supabase bearer-authenticated RLS, read tools and explicitly confirmed write proposals. Browser dictation uses es-PE and never sends automatically. Pending confirmations expire after 15 minutes and are held in server memory; restarting the server invalidates them. The orange Nota de voz button opens Asistente PAC; the old notes route remains available. Ozonar (/panel/ozonar, formerly Apollo) shows real prospects scored by the PAC agent from public.prospectos, falling back to labelled example leads, with contact creation. Reports combine real database aggregates with a distinctly labelled illustrative projection.
 
 Assistant protocol: the browser submits a conversationId and requestId. The server retains full SDK Content/Parts (including thought signatures and paired tool responses) scoped by authenticated UID and conversation, in bounded 30-minute memory; no chat-history table. Never rebuild signed model messages from visible UI text. Keep the successful model for the conversation; switching models starts a fresh user-context quotation and reruns reads/privacy checks, never CRM writes.
 
@@ -42,7 +42,7 @@ HTTP 429/503, including quota errors, retry after 1s and 3s before the other Fla
 
 ## User preferences
 
-All content in Spanish. Match the supplied TECNOCARE storyboard references: Inter, navy #14213D, blue #2F6FDB, orange #F28C28, background #F4F6FB, responsive white cards. Use the provided full PNG logo over white/light backgrounds, including Apollo center; use the icon PNG only for favicon and loading.
+All content in Spanish. Match the supplied TECNOCARE storyboard references: Inter, navy #14213D, blue #2F6FDB, orange #F28C28, background #F4F6FB, responsive white cards. Use the provided full PNG logo over white/light backgrounds, including Ozonar center; use the icon PNG only for favicon and loading.
 
 ## Contact lifecycle
 

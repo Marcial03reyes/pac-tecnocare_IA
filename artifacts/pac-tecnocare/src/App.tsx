@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Route, Switch, useLocation, Router as WouterRouter } from "wouter";
+import { Redirect, Route, Switch, useLocation, Router as WouterRouter } from "wouter";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -36,7 +36,8 @@ function Router() {
       <Route path="/panel/embudo"><Private><EmbudoPage /></Private></Route>
       <Route path="/panel/llamadas"><Private><LlamadasPage /></Private></Route>
       <Route path="/panel/asistente"><Private><AsistentePage /></Private></Route>
-      <Route path="/panel/apollo"><Private><ApolloPage /></Private></Route>
+      <Route path="/panel/ozonar"><Private><ApolloPage /></Private></Route>
+      <Route path="/panel/apollo"><Redirect to="/panel/ozonar" replace /></Route>
       <Route path="/panel/reportes"><Private><ReportesPage /></Private></Route>
       <Route component={NotFound} />
     </Switch>

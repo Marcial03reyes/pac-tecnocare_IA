@@ -75,7 +75,7 @@ export async function createOrFindApolloClient(
     email: lead.email,
     temperatura_actual: null,
     etapa_actual: "Lead",
-    origen: "Apollo",
+    origen: "Ozonar",
     proximo_contacto_fecha: apolloFollowupDate(),
     proximo_contacto_motivo: "Esperar respuesta",
   }).select("id").single();

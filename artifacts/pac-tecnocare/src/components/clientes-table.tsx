@@ -143,7 +143,7 @@ export function ClientesTable() {
             </tbody>
           </table>
         </div>
-        {q.data && all.length === 0 && <EmptyState icon={<Users className="h-5 w-5" />} title="Aún no hay contactos" text="Contacta leads desde Apollo y aparecerán aquí." />}
+        {q.data && all.length === 0 && <EmptyState icon={<Users className="h-5 w-5" />} title="Aún no hay contactos" text="Contacta prospectos desde Ozonar y aparecerán aquí." />}
         {q.data && all.length > 0 && rows.length === 0 && (term
           ? <EmptyState icon={<Search className="h-5 w-5" />} title="Sin coincidencias" text={`Ningún contacto coincide con "${term}".`} />
           : <EmptyState icon={<Users className="h-5 w-5" />} title={`Nada en ${TABS.find((t) => t.k === tab)?.label}`} text="Cuando un contacto llegue a esta etapa aparecerá aquí." />)}

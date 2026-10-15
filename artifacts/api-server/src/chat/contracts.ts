@@ -27,7 +27,7 @@ export const contactInput = z.object({ cliente_id: id }).strict();
 export const followupsInput = z.object({ desde: date, hasta: date }).strict().refine((v) => v.desde <= v.hasta, "El rango de fechas no es válido.");
 export const createInput = z.object({
   nombre: z.string().trim().min(1).max(300), institucion: optionalText, especialidad: optionalText,
-  telefono: optionalText, email, origen: z.enum(["Apollo", "Evento", "Referido", "Web", "Otro"]).optional(),
+  telefono: optionalText, email, origen: z.enum(["Ozonar", "Evento", "Referido", "Web", "Otro"]).optional(),
 }).strict();
 export const updateFields = z.object({
   etapa_actual: z.enum(CHAT_STAGES).optional(), temperatura_actual: temperature.nullable().optional(),

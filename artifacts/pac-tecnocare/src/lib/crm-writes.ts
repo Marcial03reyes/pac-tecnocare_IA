@@ -4,7 +4,7 @@ import { STAGES, normalizeStage } from "./contact-stages";
 import { normalizarTemp } from "./temperatura";
 import { todayLima } from "./format";
 
-export const ORIGINS = ["Apollo", "Evento", "Referido", "Web", "Otro"] as const;
+export const ORIGINS = ["Ozonar", "Evento", "Referido", "Web", "Otro"] as const;
 const EDITABLE = ["nombre", "institucion", "especialidad", "telefono", "email", "origen", "etapa_actual",
   "temperatura_actual", "proximo_contacto_fecha", "proximo_contacto_motivo", "ultima_reunion", "motivo_perdida", "fecha_cierre"] as const;
 

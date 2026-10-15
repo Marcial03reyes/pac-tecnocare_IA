@@ -43,7 +43,7 @@ function errMsg(e: unknown) {
 const norm = (s: string | null | undefined) => (s ?? "").trim().toLowerCase();
 
 export default function ApolloPage() {
-  usePageMeta("Apollo · Prospección — PAC TECNOCARE", "Prospectos calificados por afinidad y creación de contactos para TECNOCARE.");
+  usePageMeta("Ozonar · Prospección — PAC TECNOCARE", "Prospectos calificados por afinidad y creación de contactos para TECNOCARE.");
   const prospectos = useProspectos();
   const reales = (prospectos.data?.length ?? 0) > 0;
   const placed = useMemo(() => place(reales ? prospectos.data! : APOLLO_SAMPLE), [reales, prospectos.data]);
@@ -126,8 +126,8 @@ export default function ApolloPage() {
 
         <header className="absolute left-5 right-5 top-5 z-30 flex items-start justify-between gap-3 sm:left-7 sm:right-7 sm:top-6">
           <div className="pointer-events-none min-w-0">
-          <p className="text-[10px] font-bold tracking-[.28em] text-[#F28C28]">APOLLO · PROSPECCIÓN</p>
-          <h1 className="mt-1 text-2xl font-bold leading-tight text-white sm:text-[32px]">Leads cerca de TECNOCARE</h1>
+          <p className="text-[10px] font-bold tracking-[.28em] text-[#F28C28]">OZONAR · PROSPECCIÓN</p>
+          <h1 className="mt-1 text-2xl font-bold leading-tight text-white sm:text-[32px]">¿A quién contactar primero?</h1>
           {prospectos.isLoading ? (
             <p className="mt-2 flex items-center gap-1 text-[10px] text-[#B9C2D6]"><Loader2 className="h-3 w-3 animate-spin" />Cargando prospectos…</p>
           ) : reales ? (

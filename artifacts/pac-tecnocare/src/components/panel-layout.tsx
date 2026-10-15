@@ -15,7 +15,7 @@ const NAV = [
   { href: "/panel/embudo", label: "Ruta de venta", icon: Route },
   { href: "/panel/llamadas", label: "Llamadas", icon: Phone },
   { href: "/panel/asistente", label: "Asistente PAC", icon: MessageCircle },
-  { href: "/panel/apollo", label: "Apollo", icon: Orbit },
+  { href: "/panel/ozonar", label: "Ozonar", icon: Orbit },
   { href: "/panel/reportes", label: "Reportes", icon: BarChart3 },
 ];
 
