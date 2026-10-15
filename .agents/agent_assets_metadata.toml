@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "mSigE5xlt550eb0uhqsBc"
+uri = "file://generated-artifacts/pac-tecnocare-codigo.zip"
+type = "unspecified"
+title = "PAC TECNOCARE — Código fuente"
+description = "ZIP con la web, servidor del Asistente, bibliotecas internas, logos y guía LEEME-VPS.md. Sin secretos ni datos de Supabase."
+logical_id = "1db77172-3beb-4885-8e35-21c819f4ca37"
+content_hash = "sha256:7aa6778787e616c0818125cd94a130f5f011a44a51f3a3eec2eab3ee3ee9b836"
+size = 2119546
+mtime_ms = 1792074650612
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:0e116d2e-00f1-4b5b-838f-4e371c94c7ba/1db77172-3beb-4885-8e35-21c819f4ca37/f5de0944-b2b5-48e5-a334-0947895e8eda"
+storage_version_token = "1792074655154498"
+content_type = "application/octet-stream"
