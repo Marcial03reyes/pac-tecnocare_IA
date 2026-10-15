@@ -5,6 +5,7 @@ import { Logo } from "@/components/logo";
 import { VoiceNoteButton } from "@/components/voice-note-modal";
 import { useContactApollo, contactChannelUrl } from "@/hooks/use-contact-apollo";
 import { useClientes } from "@/hooks/use-pac-data";
+import { useProspectos, marcarProspectoAprobado } from "@/hooks/use-prospectos";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import type { ApolloLead } from "@/lib/apollo-types";
 import { APOLLO_SAMPLE, TIER_COLOR, tierOf, type Tier } from "@/lib/apollo-sample";
@@ -42,8 +43,10 @@ function errMsg(e: unknown) {
 const norm = (s: string | null | undefined) => (s ?? "").trim().toLowerCase();
 
 export default function ApolloPage() {
-  usePageMeta("Apollo · Prospección — PAC TECNOCARE", "Leads de ejemplo por afinidad y creación de contactos para TECNOCARE.");
-  const placed = useMemo(() => place(APOLLO_SAMPLE), []);
+  usePageMeta("Apollo · Prospección — PAC TECNOCARE", "Prospectos calificados por afinidad y creación de contactos para TECNOCARE.");
+  const prospectos = useProspectos();
+  const reales = (prospectos.data?.length ?? 0) > 0;
+  const placed = useMemo(() => place(reales ? prospectos.data! : APOLLO_SAMPLE), [reales, prospectos.data]);
   const clientes = useClientes();
   const [sel, setSel] = useState<string | null>(null);
   const [done, setDone] = useState<Record<string, string | number>>({});
@@ -99,6 +102,7 @@ export default function ApolloPage() {
     try {
       const res = await mutation.mutateAsync(lead);
       setDone((d) => ({ ...d, [lead.id]: res.clienteId }));
+      if (lead.prospectoId) void marcarProspectoAprobado(lead.prospectoId, res.clienteId);
       setPicking(false);
       if (channel === "whatsapp") {
         if (win && !win.closed) { win.opener = null; win.location.href = url; }
@@ -124,7 +128,13 @@ export default function ApolloPage() {
           <div className="pointer-events-none min-w-0">
           <p className="text-[10px] font-bold tracking-[.28em] text-[#F28C28]">APOLLO · PROSPECCIÓN</p>
           <h1 className="mt-1 text-2xl font-bold leading-tight text-white sm:text-[32px]">Leads cerca de TECNOCARE</h1>
-          <p className="mt-2 text-[10px] text-[#B9C2D6]" data-testid="text-datos-ejemplo">Datos de ejemplo · integración Apollo próximamente</p>
+          {prospectos.isLoading ? (
+            <p className="mt-2 flex items-center gap-1 text-[10px] text-[#B9C2D6]"><Loader2 className="h-3 w-3 animate-spin" />Cargando prospectos…</p>
+          ) : reales ? (
+            <p className="mt-2 text-[10px] text-[#B9C2D6]" data-testid="text-datos-reales">{placed.length} prospectos reales · calificados por el agente PAC (RENIPRESS + web + IA)</p>
+          ) : (
+            <p className="mt-2 text-[10px] text-[#B9C2D6]" data-testid="text-datos-ejemplo">Datos de ejemplo · aún no hay prospectos calificados</p>
+          )}
           </div>
           <div className="shrink-0"><VoiceNoteButton compact /></div>
         </header>
@@ -183,10 +193,22 @@ export default function ApolloPage() {
             <button onClick={() => choose(null)} aria-label="Cerrar" className="absolute right-2.5 top-2.5 rounded p-1 text-muted-foreground hover:text-[#14213D]" data-testid="button-cerrar-lead"><X className="h-4 w-4" /></button>
             <span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white" style={{ background: TIER_COLOR[current.tier] }} data-testid="text-afinidad">Afinidad {current.lead.afinidad}%</span>
             <h2 className="mt-2 pr-5 text-base font-bold leading-tight text-[#14213D]">{current.lead.nombre}</h2>
-            <p className="text-[13px] font-medium text-[#2F6FDB]">{current.lead.institucion}</p>
+            {!current.lead.real && <p className="text-[13px] font-medium text-[#2F6FDB]">{current.lead.institucion}</p>}
             <p className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground"><MapPin className="h-3 w-3" />{current.lead.especialidad} · {current.lead.ciudad}</p>
             <p className="mt-2 rounded-md bg-[#F4F6FB] p-2.5 text-[12px] leading-snug text-[#14213D]">{current.lead.nota}</p>
-            <p className="mt-2 text-[10px] text-muted-foreground">Ejemplo · {current.lead.telefono} · {current.lead.email} <span className="font-semibold">(ficticios)</span></p>
+            {current.lead.real ? (
+              <div className="mt-2 space-y-0.5 text-[11px] text-muted-foreground">
+                {current.lead.producto && <p data-testid="text-producto">Producto sugerido: <span className="font-semibold text-[#14213D]">{current.lead.producto}</span></p>}
+                {current.lead.fijo && <p>Teléfono: {current.lead.fijo}</p>}
+                {current.lead.web && (
+                  <a href={current.lead.web} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-[#2F6FDB] underline" data-testid="link-web-prospecto">
+                    <ExternalLink className="h-3 w-3" />Ver web / red social
+                  </a>
+                )}
+              </div>
+            ) : (
+              <p className="mt-2 text-[10px] text-muted-foreground">Ejemplo · {current.lead.telefono} · {current.lead.email} <span className="font-semibold">(ficticios)</span></p>
+            )}
 
             {cid !== undefined ? (
               <Link href={`/panel/clientes?tab=leads&contacto=${encodeURIComponent(String(cid))}`} data-testid="link-ver-en-leads"
@@ -196,9 +218,9 @@ export default function ApolloPage() {
             ) : picking ? (
               <div className="mt-3 space-y-1.5">
                 <div className="grid grid-cols-2 gap-1.5">
-                  <button onClick={() => contactar(current.lead, "whatsapp")} disabled={mutation.isPending} data-testid="button-contactar-whatsapp"
+                  <button onClick={() => contactar(current.lead, "whatsapp")} disabled={mutation.isPending || !current.lead.telefono} title={current.lead.telefono ? undefined : "Sin celular registrado"} data-testid="button-contactar-whatsapp"
                     className="flex items-center justify-center gap-1.5 rounded-md bg-[#1F9D61] py-2 text-[13px] font-semibold text-white hover:bg-[#188452] disabled:opacity-60"><MessageCircle className="h-4 w-4" />WhatsApp</button>
-                  <button onClick={() => contactar(current.lead, "correo")} disabled={mutation.isPending} data-testid="button-contactar-correo"
+                  <button onClick={() => contactar(current.lead, "correo")} disabled={mutation.isPending || !current.lead.email} title={current.lead.email ? undefined : "Sin correo registrado"} data-testid="button-contactar-correo"
                     className="flex items-center justify-center gap-1.5 rounded-md bg-[#2F6FDB] py-2 text-[13px] font-semibold text-white hover:bg-[#245BBC] disabled:opacity-60"><Mail className="h-4 w-4" />Correo</button>
                 </div>
                 {mutation.isPending ? <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" />Guardando contacto…</p>

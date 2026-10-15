@@ -10,6 +10,13 @@ export interface ApolloLead {
   nota: string;
   telefono: string;
   email: string;
+  /** true = prospecto real de la tabla `prospectos` (agente de prospección), no un ejemplo. */
+  real?: boolean;
+  prospectoId?: number;
+  web?: string | null;
+  /** Teléfono fijo (no sirve para WhatsApp). */
+  fijo?: string | null;
+  producto?: string | null;
 }
 
 export interface ApolloContactResult {
