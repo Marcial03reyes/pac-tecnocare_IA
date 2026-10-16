@@ -325,7 +325,7 @@ export default function AsistentePage() {
   return (
     <div className="fade-up">
       <PageHeader eyebrow="Tu apoyo comercial, con revisión antes de cada cambio" title="Asistente PAC" />
-      <section className="flex h-[clamp(360px,calc(100dvh-205px),760px)] flex-col overflow-hidden rounded-[22px] border border-[#E5E5DF] bg-[#FDFCF9] shadow-[0_12px_38px_rgba(25,39,56,.07)]">
+      <section className="flex h-[clamp(340px,calc(100dvh-290px),760px)] flex-col md:h-[clamp(360px,calc(100dvh-205px),760px)] overflow-hidden rounded-[22px] border border-[#E5E5DF] bg-[#FDFCF9] shadow-[0_12px_38px_rgba(25,39,56,.07)]">
         <div className="flex items-center justify-between gap-4 border-b border-[#E9E7E1] bg-[#FFFEFC] px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
             <div className="grid h-10 w-10 place-items-center rounded-[14px] bg-[#172944] text-[#F4B46A]"><MessageCircle className="h-[18px] w-[18px]" /></div>

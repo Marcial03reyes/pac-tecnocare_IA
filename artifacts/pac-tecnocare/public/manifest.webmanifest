@@ -1,0 +1,21 @@
+{
+  "name": "PAC — TECNOCARE",
+  "short_name": "PAC",
+  "description": "Plataforma de Apoyo Comercial de TECNOCARE: contactos, seguimientos y notas de voz desde el celular.",
+  "lang": "es-PE",
+  "start_url": "./panel",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F6FB",
+  "theme_color": "#14213D",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Nota de voz", "short_name": "Nota de voz", "url": "./panel/asistente", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Llamadas de hoy", "short_name": "Llamadas", "url": "./panel/llamadas", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
