@@ -87,10 +87,10 @@ export function ClientesTable() {
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
           <p className="text-xs text-muted-foreground">{TABS.find((t) => t.k === tab)?.hint}</p>
-          <label className="relative">
+          <label className="relative w-full sm:w-auto">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Buscar contacto, institución…" data-testid="input-buscar-cliente"
-              className="w-56 rounded-md border bg-[#F4F6FB] py-1.5 pl-8 pr-3 text-xs outline-none transition focus:border-[#2F6FDB] focus:bg-white" />
+              className="w-full rounded-md border bg-[#F4F6FB] py-2.5 pl-8 pr-3 text-base outline-none transition focus:border-[#2F6FDB] focus:bg-white sm:w-56 sm:py-1.5 sm:text-xs" />
           </label>
         </div>
         <div className="flex flex-wrap gap-2 border-b px-4 py-3">
@@ -105,7 +105,37 @@ export function ClientesTable() {
           </select>
           {(stageFilter || tempFilter || originFilter || term) && <button className="text-xs font-semibold text-[#2F6FDB]" onClick={() => { setStageFilter(""); setTempFilter(""); setOriginFilter(""); setTerm(""); }}>Limpiar filtros</button>}
         </div>
-        <div className="overflow-x-auto">
+        <ul className="divide-y md:hidden" data-testid="list-clientes-mobile">
+          {q.isLoading && Array.from({ length: 4 }).map((_, i) => (
+            <li key={i} className="space-y-2 px-4 py-4"><Bone className="h-3.5 w-40" /><Bone className="h-3 w-56" /></li>
+          ))}
+          {rows.map((c) => (
+            <li key={String(c.id)}>
+              <div role="button" tabIndex={0} onClick={() => setSelId(String(c.id))} onKeyDown={(e) => e.key === "Enter" && e.target === e.currentTarget && setSelId(String(c.id))}
+                data-testid={`card-cliente-${c.id}`}
+                className={`flex w-full items-start gap-3 px-4 py-3.5 text-left active:bg-[#F0F5FD] ${String(c.id) === contactoParam ? "bg-[#EEF8F2]" : ""}`}>
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="truncate text-[15px] font-semibold text-[#14213D]">{textoOGuion(c.nombre, "Sin nombre")}</p>
+                    <span className="shrink-0">
+                      {tab === "oportunidades" && <TempBadge value={c.temperatura_actual} />}
+                      {tab === "leads" && <span className="rounded-md border border-dashed border-[#B9C2D6] px-2 py-0.5 text-[11px] font-semibold text-[#5B6478]">Sin respuesta</span>}
+                      {tab === "clientes" && <span className="rounded-md bg-[#1F9D61] px-2 py-0.5 text-[11px] font-semibold text-white">Cliente</span>}
+                      {tab === "cerrados" && <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${normalizeStage(c.etapa_actual) === "Perdido" ? "bg-[#FDECEC] text-[#B42F2F]" : "bg-[#EEF1F7] text-[#5B6478]"}`}>{normalizeStage(c.etapa_actual)}</span>}
+                    </span>
+                  </div>
+                  <p className="truncate text-[13px] text-[#3A4560]">{textoOGuion(c.institucion)}{tab === "oportunidades" ? ` · ${normalizeStage(c.etapa_actual)}` : ""}</p>
+                  <p className="text-[13px] text-[#5B6478]">
+                    {tab === "cerrados" ? textoOGuion(motivoDe(c), "Sin motivo") : <>Siguiente: <span className="font-medium text-[#14213D]">{textoOGuion(c.proximo_contacto_motivo, "Sin definir")}</span></>}
+                  </p>
+                  {tab === "leads" && <div className="pt-1.5"><StageActions cliente={c} compact /></div>}
+                </div>
+                <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-[#C2C9D6]" />
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[760px] text-left text-[13px]">
             <thead><tr className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{heads.map((h, i) => <th key={i} className="px-4 py-2.5 font-semibold">{h}</th>)}</tr></thead>
             <tbody>

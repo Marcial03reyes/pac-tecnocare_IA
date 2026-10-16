@@ -15,3 +15,12 @@ createRoot(document.getElementById('root')!, {
     <App />
   </ErrorBoundary>,
 );
+
+// PWA: solo en producción, para no interferir con la vista previa de desarrollo.
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL })
+      .catch((error) => console.warn("No se pudo registrar el service worker", error));
+  });
+}

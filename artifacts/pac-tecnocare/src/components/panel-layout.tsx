@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Users, Phone, MessageCircle, Orbit, BarChart3, Route, LogOut, Menu, X } from "lucide-react";
+import { Home, Users, Phone, MessageCircle, Orbit, BarChart3, Route, LogOut, Menu, X, Mic, MoreHorizontal } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useAuth } from "@/auth/auth-provider";
 import { VoiceNoteButton } from "@/components/voice-note-modal";
@@ -81,7 +81,7 @@ export function PanelLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-[100dvh] bg-[#F4F6FB]">
       <aside className="fixed inset-y-0 left-0 hidden w-[208px] bg-[#14213D] md:block">{nav}</aside>
-      <header className="sticky top-0 z-30 flex items-center justify-between bg-[#14213D] px-4 py-3 md:hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between bg-[#14213D] px-4 pb-3 pt-[max(.75rem,env(safe-area-inset-top))] md:hidden">
         <Logo light size="sm" />
         <div className="flex items-center gap-2">
         <button onClick={() => setOpen(true)} aria-label="Abrir menú" data-testid="button-menu" className="rounded-md p-1.5 text-white hover:bg-white/10"><Menu className="h-5 w-5" /></button></div>
@@ -95,8 +95,48 @@ export function PanelLayout({ children }: { children: ReactNode }) {
           </aside>
         </div>
       )}
-      <main className="md:pl-[208px]"><div className="mx-auto max-w-6xl px-4 py-6 sm:px-7 sm:py-8">{children}</div></main>
+      <main className="pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-0 md:pl-[208px]"><div className="mx-auto max-w-6xl px-4 py-6 sm:px-7 sm:py-8">{children}</div></main>
+      <MobileTabBar location={location} onMore={() => setOpen(true)} />
     </div>
+  );
+}
+
+const TABS = [
+  { href: "/panel", label: "Inicio", icon: Home },
+  { href: "/panel/clientes", label: "Contactos", icon: Users },
+  { href: "/panel/llamadas", label: "Llamadas", icon: Phone },
+];
+
+/** Barra inferior solo en celular: lo que Víctor usa con el pulgar; el resto queda en "Más". */
+function MobileTabBar({ location, onMore }: { location: string; onMore: () => void }) {
+  const [, navigate] = useLocation();
+  const isActive = (href: string) => location === href || (href !== "/panel" && location.startsWith(href));
+  const item = (active: boolean) =>
+    `flex min-w-0 flex-1 flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors ${active ? "text-[#2F6FDB]" : "text-[#5B6478]"}`;
+  const tab = ({ href, label, icon: Icon }: (typeof TABS)[number]) => (
+    <Link key={href} href={href} aria-current={isActive(href) ? "page" : undefined} className={item(isActive(href))} data-testid={`tab-mobile-${label.toLowerCase()}`}>
+      <Icon className="h-[22px] w-[22px]" /> {label}
+    </Link>
+  );
+  const moreActive = !TABS.some((t) => isActive(t.href)) && !location.startsWith("/panel/asistente");
+  return (
+    <nav aria-label="Navegación principal" className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E3E7F0] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      <div className="mx-auto flex h-[68px] max-w-md items-stretch px-2">
+        {tab(TABS[0])}
+        {tab(TABS[1])}
+        <div className="flex flex-1 items-start justify-center">
+          <button type="button" aria-label="Grabar nota de voz" data-testid="tab-mobile-nota-voz"
+            onClick={() => { navigate("/panel/asistente"); window.dispatchEvent(new Event("pac-focus-composer")); }}
+            className="-mt-5 flex h-[60px] w-[60px] items-center justify-center rounded-full bg-[#F28C28] text-white shadow-[0_8px_20px_rgba(242,140,40,.45)] ring-4 ring-white transition active:scale-95">
+            <Mic className="h-7 w-7" />
+          </button>
+        </div>
+        {tab(TABS[2])}
+        <button type="button" onClick={onMore} className={item(moreActive)} data-testid="tab-mobile-mas">
+          <MoreHorizontal className="h-[22px] w-[22px]" /> Más
+        </button>
+      </div>
+    </nav>
   );
 }
 
@@ -107,7 +147,7 @@ export function PageHeader({ eyebrow, title, action }: { eyebrow?: string; title
         {eyebrow && <p className="text-xs text-muted-foreground" data-testid="text-greeting">{eyebrow}</p>}
         <h1 className="text-2xl font-bold tracking-tight text-[#14213D]" data-testid="text-page-title">{title}</h1>
       </div>
-       <div className="ml-auto flex shrink-0 items-center gap-2">{action}<VoiceNoteButton /></div>
+       <div className="ml-auto flex shrink-0 items-center gap-2">{action}<span className="hidden md:inline-flex"><VoiceNoteButton /></span></div>
     </div>
   );
 }
