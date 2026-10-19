@@ -6,6 +6,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home";
+import EquipoPage from "@/pages/equipo";
+import NosotrosPage from "@/pages/nosotros";
+import RecursosPage from "@/pages/recursos";
 import LoginPage from "@/pages/login";
 import PanelInicio from "@/pages/panel-inicio";
 import ClientesPage from "@/pages/clientes";
@@ -30,6 +33,9 @@ function Router() {
   return (
     <Switch>
       <Route path="/"><RoutedErrorBoundary><HomePage /></RoutedErrorBoundary></Route>
+      <Route path="/equipos/:slug">{(params) => <RoutedErrorBoundary><EquipoPage slug={params.slug} /></RoutedErrorBoundary>}</Route>
+      <Route path="/nosotros"><RoutedErrorBoundary><NosotrosPage /></RoutedErrorBoundary></Route>
+      <Route path="/recursos"><RoutedErrorBoundary><RecursosPage /></RoutedErrorBoundary></Route>
       <Route path="/login"><RoutedErrorBoundary><LoginPage /></RoutedErrorBoundary></Route>
       <Route path="/panel"><Private><PanelInicio /></Private></Route>
       <Route path="/panel/clientes"><Private><ClientesPage /></Private></Route>
